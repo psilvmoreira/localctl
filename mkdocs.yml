@@ -3,7 +3,7 @@ site_description: A local Kubernetes dev platform for macOS and Windows - one CL
 site_url: https://psilvmoreira.github.io/localctl/
 repo_name: psilvmoreira/localctl
 repo_url: https://github.com/psilvmoreira/localctl
-edit_uri: edit/main/docs/
+edit_uri: edit/master/docs/
 
 docs_dir: docs
 

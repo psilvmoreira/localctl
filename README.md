@@ -408,7 +408,7 @@ rendered properly (GitHub renders Mermaid too, but the site's theme is nicer for
    `.github/workflows/docs.yml` below creates that branch for you — the option won't appear in the
    dropdown until after that first run.)
 
-From then on, **every push to `main`** rebuilds and redeploys the site automatically
+From then on, **every push to `master`** rebuilds and redeploys the site automatically
 (`.github/workflows/docs.yml`) — nothing to run by hand.
 
 To preview locally before pushing:
