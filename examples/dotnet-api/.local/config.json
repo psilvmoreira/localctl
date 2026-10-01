@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../schema/app.schema.json",
+  "name": "dotnet-api",
+  "subdomain": "dotnet-api",
+  "port": 5000,
+  "build": { "context": ".", "dockerfile": "Dockerfile" },
+  "env": {},
+  "replicas": 1,
+  "debug": { "enabled": true, "port": 2222, "type": "dotnet" },
+  "dependencies": [],
+  "sync": [{ "localPath": ".", "remotePath": "/app" }],
+  "tls": true
+}

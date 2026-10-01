@@ -1,0 +1,27 @@
+node_modules/
+.local/.generated/
+*.log
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# MkDocs local preview/build output - the real site is published to the gh-pages branch by CI.
+site/
+.venv/
+
+# Python (examples/python-app)
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# .NET (examples/dotnet-api) - scoped so the repo's own top-level bin/ (bootstrap scripts) stays tracked
+examples/dotnet-api/bin/
+examples/dotnet-api/obj/

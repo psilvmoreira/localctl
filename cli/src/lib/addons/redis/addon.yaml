@@ -1,0 +1,29 @@
+# Redis addon - deploys the real Bitnami Redis chart, configured for local dev (standalone, no
+# replicas). See docs/adding-tools.md for the full addon.yaml reference.
+
+chart:
+  repo: https://charts.bitnami.com/bitnami
+  name: redis
+  version: "28.2.4"
+
+secrets:
+  password:
+    length: 20
+
+env:
+  REDIS_HOST: "{{serviceHost}}"
+  REDIS_PORT: "6379"
+
+envFromSecret:
+  REDIS_PASSWORD:
+    secret: "{{secretName}}"
+    key: password
+
+values: |
+  architecture: standalone
+  auth:
+    existingSecret: "{{secretName}}"
+    existingSecretPasswordKey: password
+  master:
+    persistence:
+      size: "{{storage}}"

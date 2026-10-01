@@ -1,0 +1,21 @@
+{
+  "title": "All Logs",
+  "uid": "localctl-all-logs",
+  "schemaVersion": 39,
+  "timezone": "browser",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Every pod, every namespace",
+      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "targets": [
+        {
+          "expr": "{namespace=~\".+\"}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project-Infra app config",
+  "type": "object",
+  "required": ["name", "port", "build"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Lowercase alphanumeric + dashes. Used as Deployment/Service name and Docker image name."
+    },
+    "subdomain": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Defaults to name. App is reachable at <subdomain>.local.test"
+    },
+    "namespace": {
+      "type": "string",
+      "description": "Defaults to name."
+    },
+    "port": { "type": "integer", "description": "Port the app listens on inside the container." },
+    "build": {
+      "type": "object",
+      "properties": {
+        "context": { "type": "string", "default": "." },
+        "dockerfile": { "type": "string", "default": "Dockerfile" }
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "secrets": {
+      "type": "array",
+      "description": "Names only - values are never stored here. Set with \"localctl app secrets set <KEY>\"; injected via secretKeyRef, same as an addon's credentials. A name can't also appear in \"env\".",
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+    },
+    "replicas": { "type": "integer", "minimum": 1, "default": 1 },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": { "cpu": { "type": "string" }, "memory": { "type": "string" } }
+        },
+        "limits": {
+          "type": "object",
+          "properties": { "cpu": { "type": "string" }, "memory": { "type": "string" } }
+        }
+      }
+    },
+    "debug": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "port": { "type": "integer" },
+        "type": { "type": "string", "enum": ["node", "python", "go", "java", "dotnet"] }
+      }
+    },
+    "probes": {
+      "type": "object",
+      "description": "Defaults to a plain TCP check on \"port\" for both if omitted entirely. Set \"path\" to use an HTTP GET check instead.",
+      "properties": {
+        "readiness": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "initialDelaySeconds": { "type": "integer" },
+            "periodSeconds": { "type": "integer" }
+          }
+        },
+        "liveness": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "initialDelaySeconds": { "type": "integer" },
+            "periodSeconds": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "type": "string", "enum": ["postgres", "redis", "mongo"] },
+          "version": { "type": "string" },
+          "database": { "type": "string" },
+          "storage": { "type": "string", "description": "e.g. 1Gi" }
+        }
+      }
+    },
+    "sidecars": {
+      "type": "array",
+      "description": "Extra containers in the same pod as your app (the k8s sidecar pattern) - reachable from your app via localhost:<port>, no Service needed.",
+      "items": {
+        "type": "object",
+        "required": ["name", "image"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "image": { "type": "string" },
+          "port": { "type": "integer" },
+          "command": { "type": "array", "items": { "type": "string" } },
+          "args": { "type": "array", "items": { "type": "string" } },
+          "env": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    },
+    "sync": {
+      "type": "array",
+      "description": "Paths live-synced into the running container by Tilt without a full rebuild.",
+      "items": {
+        "type": "object",
+        "required": ["localPath", "remotePath"],
+        "properties": {
+          "localPath": { "type": "string" },
+          "remotePath": { "type": "string" }
+        }
+      }
+    },
+    "tls": { "type": "boolean", "default": true }
+  }
+}

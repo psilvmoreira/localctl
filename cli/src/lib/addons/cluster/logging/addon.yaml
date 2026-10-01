@@ -1,0 +1,46 @@
+# Cluster-wide logging addon - deploys Grafana Labs' own official loki-stack chart (Loki +
+# Promtail + Grafana, all in one). Enabled via `localctl addons enable logging`.
+#
+# `config` demonstrates the addon config/ folder feature: any file dropped in ./config/ becomes a
+# ConfigMap ("<release>-config"), and {{configMapName}} below wires it in as a Grafana dashboard.
+# See docs/adding-tools.md.
+
+chart:
+  repo: https://grafana.github.io/helm-charts
+  name: loki-stack
+  version: "2.10.3"
+
+config: true
+
+values: |
+  loki:
+    enabled: true
+  promtail:
+    enabled: true
+  grafana:
+    enabled: true
+    adminUser: admin
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: default
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+    dashboardsConfigMaps:
+      default: "{{configMapName}}"
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      hosts:
+        - "grafana.{{domain}}"
+      tls:
+        - hosts:
+            - "grafana.{{domain}}"

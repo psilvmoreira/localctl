@@ -1,0 +1,33 @@
+# Cluster-wide metrics addon - deploys the real prometheus-community Prometheus chart (server +
+# kube-state-metrics + node-exporter). Enabled via `localctl addons enable monitoring`.
+#
+# No bundled Grafana here (the `logging` addon already brings one) - point it at this Prometheus
+# instance yourself as a datasource if you want dashboards
+# (http://monitoring-prometheus-server.observability.svc.cluster.local - the chart's own Service
+# name, check `kubectl get svc -n observability` if it ever renames itself in a future chart
+# version rather than trusting this comment). Keeping the two addons independent means either
+# works without the other.
+
+chart:
+  repo: https://prometheus-community.github.io/helm-charts
+  name: prometheus
+  version: "29.34.0"
+
+values: |
+  alertmanager:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  server:
+    persistentVolume:
+      size: 2Gi
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      hosts:
+        - "monitoring.{{domain}}"
+      tls:
+        - hosts:
+            - "monitoring.{{domain}}"

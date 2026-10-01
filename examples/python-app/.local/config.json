@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../schema/app.schema.json",
+  "name": "python-app",
+  "subdomain": "python-app",
+  "port": 8000,
+  "build": { "context": ".", "dockerfile": "Dockerfile" },
+  "env": { "PYTHONUNBUFFERED": "1" },
+  "replicas": 1,
+  "debug": { "enabled": true, "port": 5678, "type": "python" },
+  "dependencies": [{ "type": "redis" }],
+  "sync": [{ "localPath": "./app", "remotePath": "/app/app" }],
+  "tls": true
+}

@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# One-time installer stub. Everything past "install the CLI" (container engine detection, tool
+# installs, cluster, TLS, hosts) lives in `localctl setup` (cli/src/commands/setup.js) -
+# this script only does the bit that has to happen in a shell, because `localctl` doesn't exist
+# yet: get Node running, install the CLI's own deps, and put a shim for it on your PATH.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+log()  { echo -e "\033[36m[info]\033[0m $1"; }
+ok()   { echo -e "\033[32m[ok]\033[0m $1"; }
+warn() { echo -e "\033[33m[warn]\033[0m $1"; }
+die()  { echo -e "\033[31m[error]\033[0m $1"; exit 1; }
+
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+if command_exists node; then
+  ok "node already installed"
+elif command_exists brew; then
+  log "Installing node via brew..."
+  brew install node
+else
+  die "Node.js is required. Install it (https://nodejs.org) or Homebrew (https://brew.sh), then re-run."
+fi
+
+log "Installing localctl CLI dependencies..."
+(cd "$REPO_ROOT/cli" && npm install --silent)
+
+# Not `npm link`: it needs write access to npm's global prefix (e.g. /usr/local/lib/node_modules),
+# which isn't guaranteed depending on how Node was installed, and fails with EACCES on plenty of
+# setups. A self-contained shim avoids sudo entirely and works the same regardless of Node's origin.
+LOCALCTL_BIN_DIR="$HOME/.localctl/bin"
+mkdir -p "$LOCALCTL_BIN_DIR"
+cat > "$LOCALCTL_BIN_DIR/localctl" <<EOF
+#!/usr/bin/env bash
+exec node "$REPO_ROOT/cli/bin/localctl.js" "\$@"
+EOF
+chmod +x "$LOCALCTL_BIN_DIR/localctl"
+
+SHELL_RC=""
+case "${SHELL:-}" in
+  */zsh) SHELL_RC="$HOME/.zshrc" ;;
+  */bash) SHELL_RC="$HOME/.bash_profile" ;;
+esac
+
+case ":$PATH:" in
+  *":$LOCALCTL_BIN_DIR:"*)
+    ok "localctl installed (already on PATH)"
+    ;;
+  *)
+    if [ -n "$SHELL_RC" ] && ! grep -qF "$LOCALCTL_BIN_DIR" "$SHELL_RC" 2>/dev/null; then
+      { echo ''; echo '# Added by Project-Infra bootstrap'; echo "export PATH=\"$LOCALCTL_BIN_DIR:\$PATH\""; } >> "$SHELL_RC"
+      warn "localctl installed. Added it to PATH in $SHELL_RC - run 'source $SHELL_RC' or open a new terminal."
+    else
+      warn "localctl installed at $LOCALCTL_BIN_DIR/localctl but that's not on your PATH yet."
+      warn "Add this to your shell profile: export PATH=\"$LOCALCTL_BIN_DIR:\$PATH\""
+    fi
+    ;;
+esac
+
+echo
+log "Handing off to 'localctl setup' for the rest (container engine, cluster, TLS, hosts)..."
+exec node "$REPO_ROOT/cli/bin/localctl.js" setup

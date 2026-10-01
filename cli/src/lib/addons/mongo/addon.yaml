@@ -1,0 +1,18 @@
+# Mongo addon - deploys the real Bitnami MongoDB chart. Auth disabled by default, matching this
+# addon's old behavior (local dev only, not meant to hold anything sensitive) - set auth.enabled
+# and add a secrets/envFromSecret block here (see postgres/addon.yaml) if you want it.
+
+chart:
+  repo: https://charts.bitnami.com/bitnami
+  name: mongodb
+  version: "19.3.1"
+
+env:
+  MONGO_HOST: "{{serviceHost}}"
+  MONGO_PORT: "27017"
+
+values: |
+  auth:
+    enabled: false
+  persistence:
+    size: "{{storage}}"

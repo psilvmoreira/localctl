@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../schema/app.schema.json",
+  "name": "node-app",
+  "subdomain": "node-app",
+  "port": 3000,
+  "build": { "context": ".", "dockerfile": "Dockerfile" },
+  "env": { "NODE_ENV": "development" },
+  "replicas": 1,
+  "debug": { "enabled": true, "port": 9229, "type": "node" },
+  "dependencies": [{ "type": "postgres", "database": "node_app" }],
+  "sync": [{ "localPath": "./src", "remotePath": "/app/src" }],
+  "tls": true
+}

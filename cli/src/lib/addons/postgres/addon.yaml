@@ -1,0 +1,39 @@
+# Postgres addon - deploys the real Bitnami PostgreSQL chart, configured for local dev.
+# See docs/adding-tools.md for the full addon.yaml reference.
+
+chart:
+  repo: https://charts.bitnami.com/bitnami
+  name: postgresql
+  version: "18.12.2"
+
+# Generates a random value once per key, stored as a real k8s Secret named "<release>-secret" -
+# never written to disk, never in this file. {{secretName}} below refers to that Secret's name.
+secrets:
+  password:
+    length: 20
+
+# Plain env vars injected into the app's own container automatically.
+env:
+  POSTGRES_HOST: "{{serviceHost}}"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "{{database}}"
+  POSTGRES_USER: "localdev"
+
+# Unlike `env`, these become a real secretKeyRef - the password itself never passes through a
+# plaintext value anywhere in this pipeline.
+envFromSecret:
+  POSTGRES_PASSWORD:
+    secret: "{{secretName}}"
+    key: password
+
+# Passed to `helm template` as -f values.yaml. {{...}} is substituted first: {{database}}/
+# {{storage}}/{{version}} come from the app's own .local/config.json dependency entry (with
+# fallback defaults), {{secretName}} from the generated Secret above.
+values: |
+  auth:
+    username: localdev
+    database: "{{database}}"
+    existingSecret: "{{secretName}}"
+  primary:
+    persistence:
+      size: "{{storage}}"
