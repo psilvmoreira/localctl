@@ -28,7 +28,7 @@ module.exports = (program) => {
       fs.mkdirSync(localDir, { recursive: true });
 
       const config = {
-        $schema: '../../Project-Infra/schema/app.schema.json',
+        $schema: '../../localctl/schema/app.schema.json',
         name,
         subdomain: name,
         port,

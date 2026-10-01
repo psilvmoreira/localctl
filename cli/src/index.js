@@ -3,7 +3,7 @@ const { Command } = require('commander');
 const program = new Command();
 program
   .name('localctl')
-  .description('Local Kubernetes dev platform CLI (Project-Infra)')
+  .description('Local Kubernetes dev platform CLI')
   .version('0.1.0');
 
 // Global/machine-level - not tied to any one app or addon.

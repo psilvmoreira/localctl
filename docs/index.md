@@ -2,7 +2,7 @@
 description: A local Kubernetes dev platform for macOS and Windows
 ---
 
-# Project-Infra
+# localctl
 
 A local Kubernetes dev platform for macOS and Windows: one shared cluster, one `*.local.test`
 subdomain per app, config-driven deploys, live-reload via Tilt, HTTPS everywhere, and a single
@@ -17,9 +17,9 @@ $ localctl app up
 ```
 
 [Get started :material-arrow-right:](getting-started.md){ .md-button .md-button--primary }
-[View on GitHub :fontawesome-brands-github:](https://github.com/USERNAME/Project-Infra){ .md-button }
+[View on GitHub :fontawesome-brands-github:](https://github.com/USERNAME/localctl){ .md-button }
 
-## Why Project-Infra
+## Why localctl
 
 <div class="grid cards" markdown>
 
@@ -124,7 +124,7 @@ $ localctl app up
 ## Install in three commands
 
 ```bash
-git clone <this-repo-url> ~/dev/Project-Infra && cd ~/dev/Project-Infra/cli
+git clone <this-repo-url> ~/dev/localctl && cd ~/dev/localctl/cli
 npm install && npm install -g .
 localctl setup
 ```

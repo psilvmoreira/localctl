@@ -38,10 +38,10 @@ fi
 # The CLI process that just ran can't delete the shim it's executing from - finish that here,
 # now that it has already exited.
 for RC in "$HOME/.zshrc" "$HOME/.bash_profile"; do
-  if [ -f "$RC" ] && grep -qF "Added by Project-Infra bootstrap" "$RC"; then
+  if [ -f "$RC" ] && grep -qE "# Added by (localctl|Project-Infra) bootstrap" "$RC"; then
     TMP="$(mktemp)"
     awk '
-      $0 == "# Added by Project-Infra bootstrap" { skip=1; next }
+      /^# Added by (localctl|Project-Infra) bootstrap$/ { skip=1; next }
       skip > 0 { skip--; next }
       { print }
     ' "$RC" > "$TMP"

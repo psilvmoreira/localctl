@@ -6,8 +6,8 @@ Clone this repo somewhere permanent — it stays on your machine as the control 
 app you run locally, separate from your app repos.
 
 ```
-git clone <this-repo> ~/dev/Project-Infra
-cd ~/dev/Project-Infra
+git clone <this-repo> ~/dev/localctl
+cd ~/dev/localctl
 ```
 
 Install `localctl` as a standard global npm package:

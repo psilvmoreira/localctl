@@ -1,7 +1,7 @@
-site_name: Project-Infra
+site_name: localctl
 site_description: A local Kubernetes dev platform for macOS and Windows - one CLI, one cluster, one subdomain per app.
-repo_name: Project-Infra
-repo_url: https://github.com/USERNAME/Project-Infra
+repo_name: localctl
+repo_url: https://github.com/USERNAME/localctl
 edit_uri: edit/main/docs/
 
 docs_dir: docs
@@ -91,6 +91,6 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/USERNAME/Project-Infra
+      link: https://github.com/USERNAME/localctl
 
-copyright: Copyright &copy; Project-Infra
+copyright: Copyright &copy; localctl

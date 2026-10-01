@@ -7,7 +7,7 @@ localctl uninstall     # cluster, registry, Podman VM config, hosts entries, cer
 or, to also remove the CLI itself — pick whichever matches how you installed it:
 
 ```
-npm uninstall -g @project-infra/cli    # if you installed via `npm install -g .`
+npm uninstall -g @localctl/cli    # if you installed via `npm install -g .`
 ./bin/uninstall.sh                     # if you installed via bin/bootstrap.sh's PATH shim (macOS)
 ./bin/uninstall.ps1                    # same, Windows
 ```
@@ -57,7 +57,7 @@ rather than erroring.
 
 ## What it does NOT touch
 
-- This repo itself (`Project-Infra/`) — delete the directory yourself if you're done with it
+- This repo itself (`localctl/`) — delete the directory yourself if you're done with it
   entirely.
 - `cli/node_modules` — harmless to leave, or `rm -rf cli/node_modules` if you want it gone too.
 - Any app repos' own `.local/` folders — those belong to the app repos, not this one.

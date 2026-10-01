@@ -1,5 +1,5 @@
 {
-  "name": "@project-infra/cli",
+  "name": "@localctl/cli",
   "version": "0.1.0",
   "private": true,
   "description": "localctl - local Kubernetes dev platform CLI",

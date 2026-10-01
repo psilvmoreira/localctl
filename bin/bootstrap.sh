@@ -49,7 +49,7 @@ case ":$PATH:" in
     ;;
   *)
     if [ -n "$SHELL_RC" ] && ! grep -qF "$LOCALCTL_BIN_DIR" "$SHELL_RC" 2>/dev/null; then
-      { echo ''; echo '# Added by Project-Infra bootstrap'; echo "export PATH=\"$LOCALCTL_BIN_DIR:\$PATH\""; } >> "$SHELL_RC"
+      { echo ''; echo '# Added by localctl bootstrap'; echo "export PATH=\"$LOCALCTL_BIN_DIR:\$PATH\""; } >> "$SHELL_RC"
       warn "localctl installed. Added it to PATH in $SHELL_RC - run 'source $SHELL_RC' or open a new terminal."
     else
       warn "localctl installed at $LOCALCTL_BIN_DIR/localctl but that's not on your PATH yet."

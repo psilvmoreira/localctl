@@ -1,5 +1,5 @@
 {
-  "name": "project-infra",
+  "name": "localctl",
   "private": true,
   "version": "0.1.0",
   "description": "Local Kubernetes dev platform bootstrap + CLI"

@@ -31,7 +31,7 @@ async function uninstall(opts) {
   console.log('');
   console.log("It will NOT remove: k3d, kubectl, tilt, mkcert, node, the localctl CLI itself, or");
   console.log("mkcert's root CA trust. To remove the CLI too, use whichever matches how you");
-  console.log('installed it: `npm uninstall -g @project-infra/cli`, or `bin/uninstall.sh` /');
+  console.log('installed it: `npm uninstall -g @localctl/cli`, or `bin/uninstall.sh` /');
   console.log("`uninstall.ps1` if you used bin/bootstrap.sh's PATH shim instead.");
   console.log('');
 

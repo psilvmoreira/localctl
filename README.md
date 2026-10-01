@@ -1,6 +1,6 @@
-# Project-Infra
+# localctl
 
-📖 **[Full documentation site](https://USERNAME.github.io/Project-Infra/)** — same content as
+📖 **[Full documentation site](https://USERNAME.github.io/localctl/)** — same content as
 below, plus diagrams, search, and a nicer read. Update the `USERNAME`/`repo_url` placeholders in
 `mkdocs.yml` and this line once this repo has a real GitHub remote (see [Docs
 Site](#docs-site) below for how it's built/deployed).
@@ -87,8 +87,8 @@ missing.
    locally, so keep it around — don't nest it inside an app repo):
 
    ```
-   git clone <this-repo-url> ~/dev/Project-Infra
-   cd ~/dev/Project-Infra
+   git clone <this-repo-url> ~/dev/localctl
+   cd ~/dev/localctl
    ```
 
 2. Install `localctl` as a standard global npm package:
@@ -347,7 +347,7 @@ chart and writing one `addon.yaml`: **[docs/adding-tools.md](./docs/adding-tools
 
 ```
 localctl uninstall                          # every project's cluster/registry, Podman VM config, hosts entries, certs/state
-npm uninstall -g @project-infra/cli          # + the CLI itself, if you installed it via npm
+npm uninstall -g @localctl/cli          # + the CLI itself, if you installed it via npm
 ./bin/uninstall.sh   # or uninstall.ps1      # + the CLI itself, if you installed it via bin/bootstrap.sh's shim
 ```
 
@@ -368,7 +368,7 @@ building and testing this repo, with the actual cause and fix for each.
 ## Repo layout
 
 ```
-Project-Infra/
+localctl/
 ├── bin/                  thin installer stubs (macOS + Windows) - install Node/the CLI, then
 │                         hand off to `localctl setup`/`localctl uninstall`
 ├── cluster/              k3d cluster definition + cluster-level manifests (TLS store, namespaces)

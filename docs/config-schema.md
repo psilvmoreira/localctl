@@ -35,7 +35,7 @@ support](./architecture.md#multi-project-support).
 
 ```json
 {
-  "$schema": "../../Project-Infra/schema/app.schema.json",
+  "$schema": "../../localctl/schema/app.schema.json",
   "name": "orders-api",
   "subdomain": "orders",
   "port": 3000,

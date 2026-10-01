@@ -368,7 +368,7 @@ uses for the pattern.
 ## Repo layout
 
 ```
-Project-Infra/
+localctl/
 ├── bin/                  thin installer stubs (macOS + Windows) - install Node/CLI, then hand off
 │                         to `localctl setup`/`localctl uninstall`
 ├── cluster/              cluster-level manifests (TLS store, addon namespace) - the k3d cluster
