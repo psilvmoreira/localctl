@@ -1,0 +1,19 @@
+name: pr-title
+
+# PRs are squash-merged, so the PR title becomes the commit on master - and semantic-release
+# reads that commit to decide the next version. feat: -> minor, fix: -> patch, feat!: -> major.
+# Separate from ci.yml so editing the title re-runs only this check, not the whole test matrix.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
