@@ -58,6 +58,7 @@ nav:
   - Debugging: debugging.md
   - Uninstalling: uninstalling.md
   - Troubleshooting: troubleshooting.md
+  - Releasing: releasing.md
 
 markdown_extensions:
   - admonition

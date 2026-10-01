@@ -83,6 +83,17 @@ missing.
 
 ## Installing the CLI
 
+**From npm (recommended):**
+
+```
+npm install -g @localctl/cli
+localctl setup
+```
+
+Pre-releases (from the `beta` branch) are published under the `beta` dist-tag: `npm install -g @localctl/cli@beta`.
+
+**From source** (to hack on `localctl` itself):
+
 1. Clone this repo somewhere permanent (it acts as the control plane for every app you run
    locally, so keep it around — don't nest it inside an app repo):
 

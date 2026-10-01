@@ -1,0 +1,15 @@
+{
+  "branches": [
+    "master",
+    { "name": "beta", "prerelease": true }
+  ],
+  "tagFormat": "v${version}",
+  "plugins": [
+    ["@semantic-release/commit-analyzer", { "preset": "conventionalcommits" }],
+    ["@semantic-release/release-notes-generator", { "preset": "conventionalcommits" }],
+    ["@semantic-release/npm", { "pkgRoot": "cli", "tarballDir": "dist" }],
+    ["@semantic-release/github", {
+      "assets": [{ "path": "dist/*.tgz", "label": "npm package (${nextRelease.gitTag})" }]
+    }]
+  ]
+}

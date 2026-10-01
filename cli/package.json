@@ -1,12 +1,43 @@
 {
   "name": "@localctl/cli",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.0.0-development",
   "description": "localctl - local Kubernetes dev platform CLI",
+  "keywords": [
+    "kubernetes",
+    "k3d",
+    "tilt",
+    "local-development",
+    "cli",
+    "devtools"
+  ],
+  "homepage": "https://psilvmoreira.github.io/localctl/",
+  "bugs": {
+    "url": "https://github.com/psilvmoreira/localctl/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/psilvmoreira/localctl.git",
+    "directory": "cli"
+  },
+  "author": "Pedro Moreira",
+  "license": "MIT",
   "bin": {
     "localctl": "bin/localctl.js"
   },
   "main": "src/index.js",
+  "files": [
+    "bin/",
+    "src/",
+    "templates/",
+    "assets/",
+    "schema/"
+  ],
+  "scripts": {
+    "sync-assets": "node scripts/sync-assets.js",
+    "prepack": "node scripts/sync-assets.js",
+    "test": "node scripts/smoke-test.js",
+    "test:pack": "node scripts/pack-test.js"
+  },
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
@@ -15,5 +46,9 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

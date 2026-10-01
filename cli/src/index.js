@@ -1,10 +1,11 @@
 const { Command } = require('commander');
+const { version } = require('../package.json');
 
 const program = new Command();
 program
   .name('localctl')
   .description('Local Kubernetes dev platform CLI')
-  .version('0.1.0');
+  .version(version);
 
 // Global/machine-level - not tied to any one app or addon.
 require('./commands/setup')(program);

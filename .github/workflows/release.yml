@@ -1,0 +1,87 @@
+name: release
+
+# Every merge to master (or beta) runs semantic-release, which reads the Conventional Commit
+# messages since the last tag and, if any warrant a release:
+#   1. computes the next version (fix: patch, feat: minor, feat!/BREAKING CHANGE: major),
+#   2. tags vX.Y.Z,
+#   3. publishes @localctl/cli to npm with provenance (trusted publishing, no token),
+#   4. creates a GitHub Release with generated notes and the .tgz attached.
+# Merges with only chore:/docs:/ci:/refactor:/test: commits release nothing. See docs/releasing.md.
+on:
+  push:
+    branches: [master, beta]
+    paths-ignore:
+      - "docs/**"
+      - "mkdocs.yml"
+      - ".github/workflows/docs.yml"
+
+# Never run two releases at once; never cancel one halfway.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cli/package-lock.json
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:pack
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@localctl/cli
+    permissions:
+      contents: write        # push the vX.Y.Z tag, create the GitHub Release
+      issues: write          # comment "released in vX.Y.Z" on linked issues
+      pull-requests: write   # ...and on the merged PRs
+      id-token: write        # npm trusted publishing (OIDC) + provenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # semantic-release needs every tag and commit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            cli/package-lock.json
+
+      # Trusted publishing needs npm >= 11.5.1.
+      - run: npm install -g npm@latest
+
+      - name: Install semantic-release
+        run: npm ci
+
+      - name: Install CLI dependencies
+        run: npm ci
+        working-directory: cli
+
+      - name: Verify dependency signatures
+        run: npm audit signatures
+
+      - name: Release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Fallback until trusted publishing is configured on npmjs.com - delete the secret after.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

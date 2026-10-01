@@ -25,3 +25,12 @@ __pycache__/
 # .NET (examples/dotnet-api) - scoped so the repo's own top-level bin/ (bootstrap scripts) stays tracked
 examples/dotnet-api/bin/
 examples/dotnet-api/obj/
+
+# npm package build output - copied from the repo root into cli/ by cli/scripts/sync-assets.js
+cli/assets/
+cli/schema/
+cli/README.md
+cli/LICENSE
+*.tgz
+# semantic-release tarball output
+dist/
