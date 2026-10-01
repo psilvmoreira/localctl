@@ -1,285 +1,264 @@
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/psilvmoreira/localctl/master/docs/assets/favicon.svg" alt="localctl logo" width="96" height="96">
+
 # localctl
 
-📖 **[Full documentation site](https://psilvmoreira.github.io/localctl/)** — same content as
-below, plus diagrams, search, and a nicer read. Update the `USERNAME`/`repo_url` placeholders in
-`mkdocs.yml` and this line once this repo has a real GitHub remote (see [Docs
-Site](#docs-site) below for how it's built/deployed).
+**Local Kubernetes for app developers. One CLI, one cluster, a real HTTPS subdomain per app.**
 
-A local Kubernetes dev platform for macOS and Windows: one shared cluster, one `*.local.test`
-subdomain per app, config-driven deploys, live-reload via Tilt, HTTPS everywhere, and a single
-CLI — `localctl` — that owns the whole lifecycle from first install to full teardown.
+[![npm version](https://img.shields.io/npm/v/@localctl/cli?logo=npm&color=cb3837)](https://www.npmjs.com/package/@localctl/cli)
+[![npm downloads](https://img.shields.io/npm/dm/@localctl/cli?color=cb3837)](https://www.npmjs.com/package/@localctl/cli)
+[![Node.js](https://img.shields.io/node/v/@localctl/cli?logo=node.js&logoColor=white&color=5fa04e)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/github/license/psilvmoreira/localctl?color=blue)](https://github.com/psilvmoreira/localctl/blob/master/LICENSE)
+<br>
+[![Release](https://github.com/psilvmoreira/localctl/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/psilvmoreira/localctl/actions/workflows/release.yml)
+[![Tests](https://github.com/psilvmoreira/localctl/actions/workflows/ci.yml/badge.svg)](https://github.com/psilvmoreira/localctl/actions/workflows/ci.yml)
+[![Docs](https://github.com/psilvmoreira/localctl/actions/workflows/docs.yml/badge.svg?branch=master)](https://psilvmoreira.github.io/localctl/)
+[![semantic-release](https://img.shields.io/badge/semantic--release-conventionalcommits-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
-Point it at any app repo, describe the app in a small JSON file, and `localctl app up` builds it,
-deploys it, wires up its subdomain and TLS certificate, and live-syncs your code on every save.
+[**Documentation**](https://psilvmoreira.github.io/localctl/) ·
+[**Getting started**](https://psilvmoreira.github.io/localctl/getting-started/) ·
+[**Releases**](https://github.com/psilvmoreira/localctl/releases) ·
+[**Report a bug**](https://github.com/psilvmoreira/localctl/issues/new)
 
+</div>
+
+```console
+$ npm install -g @localctl/cli
+$ localctl setup
+$ cd my-app && localctl app new && localctl app up
+
+ok my-app -> https://my-app.local.test
 ```
-$ localctl app up
-ok orders-api -> https://orders.local.test
-```
+
+---
 
 ## Table of contents
 
-- [Features](#features)
+- [Why localctl](#why-localctl)
 - [Requirements](#requirements)
-- [Installing the CLI](#installing-the-cli)
-- [Quickstart: deploy your first app](#quickstart-deploy-your-first-app)
-- [CLI reference](#cli-reference)
-- [App configuration](#app-configuration)
-- [Multiple projects](#multiple-projects)
-- [Architecture](#architecture)
-- [Debugging](#debugging)
-- [Adding tools (databases, logging, more)](#adding-tools-databases-logging-more)
+- [Installation](#installation)
+  - [Supported container engines](#supported-container-engines)
+  - [Updating](#updating)
+- [Quick start](#quick-start)
+- [Commands](#commands)
+- [Configuration](#configuration)
+- [Addons](#addons)
+- [How it works](#how-it-works)
+- [Documentation](#documentation)
+- [Releases and versioning](#releases-and-versioning)
+- [Contributing](#contributing)
 - [Uninstalling](#uninstalling)
-- [Troubleshooting](#troubleshooting)
-- [Repo layout](#repo-layout)
-- [Documentation index](#documentation-index)
-- [Docs Site](#docs-site)
+- [License](#license)
 
-## Features
+## Why localctl
 
-- **One cluster, one CLI.** A single k3d (k3s-in-Docker) cluster runs every app you're developing
-  locally. No per-project Kubernetes setup, no VM sprawl.
-- **A real subdomain per app.** `myapp.local.test`, `orders.local.test`, whatever you name it —
-  routed by Traefik, no port-juggling, no `localhost:3000` vs `localhost:3001` confusion.
-- **HTTPS by default.** A locally-trusted wildcard certificate (via `mkcert`) is wired into the
-  cluster's ingress automatically. Every app gets a green padlock, not a browser warning.
-- **Config-driven, not YAML-driven.** Each app repo gets one `.local/config.json`. `localctl`
-  generates every Kubernetes manifest from it — you never hand-write or hand-edit Kubernetes YAML.
-- **Fast inner loop.** Tilt builds your image, pushes it to a local registry, deploys it, and
-  live-syncs changed files straight into the running container — no full rebuild for every edit.
-- **Debugger-friendly.** Declare a debug port in config and it's forwarded to `localhost`
-  automatically. Node, Python, Go, Java, and .NET patterns are documented and ready to copy.
-- **Cross-platform, including Podman.** Works with Docker Desktop, Podman Desktop, or Rancher
-  Desktop. Podman-specific quirks (BuildKit protocol, insecure-registry trust) are detected and
-  handled automatically — you don't need to know they exist.
-- **Real Helm charts, zero JS.** Per-app databases (Postgres, Redis, MongoDB via Bitnami's own
-  charts) and cluster-wide addons (a Grafana/Loki logging stack, a Prometheus metrics stack) are
-  each just one `addon.yaml` file pointing at a published chart — adding a new one is dropping in
-  a folder, no code required. Each dependency also gets a `wait-for-<type>` init container
-  automatically, so your app never races one that isn't ready yet.
-- **Real readiness, not just "the process started."** Every app gets a TCP (or HTTP, if you set a
-  path) readiness/liveness probe by default — `kubectl rollout status` succeeding actually means
-  it's serving.
-- **Your own secrets, never plaintext.** API keys and tokens you supply (not addon-generated
-  credentials) go through the same real-Secret/`secretKeyRef` pipeline — `localctl app secrets
-  set/show` to write and read them, `.local/config.json` only ever holds the key name.
-- **Clean install, clean uninstall.** Nothing is installed with `sudo`-requiring global state where
-  avoidable, and `localctl uninstall` reverses everything `localctl setup` did.
-- **More than one project when you need it.** `default` (one shared cluster) is all most people
-  ever need, but `localctl profiles new` can spin up an isolated project - either its own separate
-  cluster, or just a namespace-scoped slice of an existing one - and directory-based resolution
-  (walk up for the nearest `.local/project.json`, same idea as `.git`/`.claude`) means `app`
-  commands just know which project they're in.
+Running several apps on Kubernetes locally usually means port juggling, hand-written YAML,
+self-signed certificate warnings, and slow rebuilds. `localctl` replaces all of that with one
+JSON file per app.
+
+| | |
+|---|---|
+| 🧩 **One cluster, one CLI** | A single [k3d](https://k3d.io) cluster runs every app you develop. No per-project Kubernetes setup. |
+| 🌐 **A subdomain per app** | `orders.local.test`, `billing.local.test`, routed by Traefik. No `localhost:3000` vs `:3001`. |
+| 🔒 **HTTPS by default** | A locally-trusted wildcard certificate (via [mkcert](https://github.com/FiloSottile/mkcert)). Green padlock, no browser warnings. |
+| 📄 **Config, not YAML** | Each app has one `.local/config.json`. Every Kubernetes manifest is generated from it. |
+| ⚡ **Fast inner loop** | [Tilt](https://tilt.dev) builds, deploys, and live-syncs changed files into the running container. |
+| 🐞 **Debugger-friendly** | Debug ports forwarded to `localhost`. Node, Python, Go, Java and .NET patterns included. |
+| 🗄️ **Databases in one line** | Postgres, Redis and MongoDB per app, from real Helm charts, with credentials injected as Secrets. |
+| 🐳 **Podman first** | Podman quirks (BuildKit, insecure registry) are detected and handled automatically. Docker Desktop and Rancher Desktop support is [experimental](#supported-container-engines). |
+| 🧹 **Clean uninstall** | `localctl uninstall` reverses everything `localctl setup` did. |
 
 ## Requirements
 
-- **macOS** or **Windows** (PowerShell)
-- One running container engine: **Docker Desktop**, **Podman Desktop**, or **Rancher Desktop**
-- **Git**, to clone this repo and your app repos
-- **Homebrew** (macOS) or **winget** (Windows) — used once to install missing tools
+| Requirement | Notes |
+|---|---|
+| **macOS** or **Windows** | Windows commands run in PowerShell. |
+| **Node.js 18+** | Needed to install the CLI from npm. |
+| **Container engine** | [Podman Desktop](https://podman-desktop.io/), running. See [supported container engines](#supported-container-engines). |
+| **Homebrew** or **winget** | Used once by `localctl setup` to install missing tools. |
 
-Everything else (`k3d`, `kubectl`, `tilt`, `mkcert`, `helm`, Node.js) is installed automatically if it's
-missing.
+`localctl setup` installs `k3d`, `kubectl`, `tilt`, `mkcert` and `helm` for you if they're missing.
 
-## Installing the CLI
+### Supported container engines
 
-**From npm (recommended):**
+| Engine | Status |
+|---|---|
+| [Podman Desktop](https://podman-desktop.io/) | ✅ Tested |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | 🧪 Experimental — not yet tested |
+| [Rancher Desktop](https://rancherdesktop.io/) | 🧪 Experimental — not yet tested |
 
-```
+Experimental engines are detected and should work, since k3d only needs a Docker-compatible API,
+but they haven't been through a full test cycle yet. `localctl setup` and `localctl doctor` print
+a warning when one is in use. If you try one, please
+[report how it went](https://github.com/psilvmoreira/localctl/issues/new).
+
+## Installation
+
+```sh
 npm install -g @localctl/cli
+localctl setup
+localctl doctor     # every line should read [ok]
+```
+
+`localctl setup` detects your container engine, installs missing tools, creates the cluster and
+the local image registry, trusts the `*.local.test` certificate, and updates your hosts file. It
+is idempotent: run it again any time to repair your environment.
+
+You'll see up to two one-time prompts during setup: **mkcert** asking to trust its local
+certificate authority, and **sudo/Administrator** to write the `*.local.test` hosts entries.
+
+**Pre-releases** are published under the `beta` tag: `npm install -g @localctl/cli@beta`.
+
+### Updating
+
+`localctl` checks npm for a new version at most once a day, in the background, and tells you
+when one is available:
+
+```console
+Update available: 0.2.0 -> 0.3.0
+Run npm install -g @localctl/cli to update.
+```
+
+Update with `npm install -g @localctl/cli`. The check never slows a command down, is skipped in
+CI, and can be turned off with `LOCALCTL_NO_UPDATE_CHECK=1`.
+
+<details>
+<summary><b>Getting <code>EACCES</code> on <code>npm install -g</code>?</b></summary>
+
+npm's global directory isn't writable by your user, which is common on macOS when Node wasn't
+installed through a version manager. Fix it once for every global install
+([npm's documented fix](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally)):
+
+```sh
+mkdir ~/.npm-global
+npm config set prefix ~/.npm-global
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc   # or ~/.bash_profile
+source ~/.zshrc
+```
+
+</details>
+
+<details>
+<summary><b>Install from source</b> (to work on localctl itself)</summary>
+
+```sh
+git clone https://github.com/psilvmoreira/localctl.git
+cd localctl/cli
+npm install
+npm install -g .
 localctl setup
 ```
 
-Pre-releases (from the `beta` branch) are published under the `beta` dist-tag: `npm install -g @localctl/cli@beta`.
+Or, without touching npm's global config, use the bootstrap scripts. They install a
+self-contained shim in `~/.localctl/bin` and run `localctl setup` for you:
 
-**From source** (to hack on `localctl` itself):
-
-1. Clone this repo somewhere permanent (it acts as the control plane for every app you run
-   locally, so keep it around — don't nest it inside an app repo):
-
-   ```
-   git clone <this-repo-url> ~/dev/localctl
-   cd ~/dev/localctl
-   ```
-
-2. Install `localctl` as a standard global npm package:
-
-   ```
-   cd cli
-   npm install
-   npm install -g .
-   ```
-
-   > **Hit `EACCES`?** That means npm's global install directory isn't writable by your user —
-   > common on macOS when Node wasn't installed through a version manager. Fix it once, for every
-   > future global npm install, not just this one ([npm's own documented fix](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally)):
-   > ```
-   > mkdir ~/.npm-global
-   > npm config set prefix ~/.npm-global
-   > echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc   # or ~/.bash_profile
-   > source ~/.zshrc
-   > ```
-   > Then re-run `npm install -g .` from `cli/`.
-
-3. Run the actual infra setup:
-
-   ```
-   localctl setup
-   ```
-
-   This detects your container engine, installs `k3d`/`kubectl`/`tilt`/`mkcert`/`helm` if missing,
-   creates the local cluster, starts the local image registry, generates and trusts the
-   `*.local.test` TLS certificate, and syncs your hosts file.
-
-   You'll see up to two password prompts during this step — both expected, both one-time:
-   - **mkcert** asking to trust its local certificate authority (macOS Touch ID/password prompt)
-   - **sudo/Administrator** asking to write the `*.local.test` entries to your hosts file
-
-4. Confirm it worked:
-
-   ```
-   localctl doctor
-   ```
-
-   Every line should read `[ok]`.
-
-From here on, `localctl` is a normal globally-installed command:
-
-```
-localctl setup    # re-check or repair the infra at any time — fully idempotent
-localctl uninstall    # tear the infra back down (see Uninstalling below)
+```sh
+./bin/bootstrap.sh      # macOS
+./bin/bootstrap.ps1     # Windows (PowerShell)
 ```
 
-<details>
-<summary>Alternative: install without touching npm's global config</summary>
-
-If you'd rather not change npm's global prefix, `bin/bootstrap.sh` (macOS) / `bootstrap.ps1`
-(Windows) install `localctl` as a self-contained PATH shim in `~/.localctl/bin` instead of a real
-npm global package — no `npm install -g`, no `EACCES` possible, same `localctl` command either
-way:
-
-```
-./bin/bootstrap.sh        # macOS — installs the shim, then runs `localctl setup` for you
-./bin/bootstrap.ps1        # Windows (PowerShell)
-```
-
-Uninstall the shim version with `./bin/uninstall.sh` / `uninstall.ps1` instead of
-`npm uninstall -g` (see [Uninstalling](#uninstalling)).
 </details>
 
-## Quickstart: deploy your first app
+## Quick start
 
-Try it immediately with the bundled example, no app of your own required:
+**1. Scaffold** — from inside your app's repository:
 
+```sh
+localctl app new
 ```
-cd examples/node-app
-localctl app up
-```
 
-`localctl app up` runs in the background by default — it prints the app's real URL once the
-deployment is ready and hands control of the terminal straight back to you, so closing that
-terminal doesn't stop the app:
+This asks for an app name and port, then creates `.local/config.json` and a `Tiltfile`.
 
-```
+**2. Deploy:**
+
+```console
 $ localctl app up
 > Waiting for the deployment to become ready...
-deployment "node-app" successfully rolled out
+deployment "my-app" successfully rolled out
 
-ok node-app -> https://node-app.local.test
+ok my-app -> https://my-app.local.test
   debug:  localhost:9229
-  logs:   localctl app logs node-app -f
+  logs:   localctl app logs my-app -f
   status: localctl app status
   stop:   localctl app down
 ```
 
-Open <https://node-app.local.test>. Live-sync keeps working in the background exactly as if it
-were running in the foreground — edit a file under any path listed in `"sync"` and it updates
-without a full rebuild, as long as something inside the container watches for the change and
-restarts (`nodemon`, `uvicorn --reload`, etc. — see [Debugging](#debugging) and
-`examples/node-app/Dockerfile` for a working pattern).
+The dev loop runs in the background, so closing the terminal doesn't stop it. Edit a file under
+a `sync` path and it updates in the running container without a full rebuild. Use
+`localctl app up -f` for the interactive Tilt UI instead.
 
-Want the interactive Tilt UI instead (build logs streaming live in your terminal)? Add `-f`:
+**3. Check on it:**
 
+```console
+$ localctl app status
+APP     NAMESPACE  READY  URL                       DEV LOOP
+my-app  my-app     1/1    https://my-app.local.test  running (pid 4815)
 ```
-localctl app up -f
+
+**4. Stop it:**
+
+```sh
+localctl app down
 ```
 
-To use it with your own app:
+This removes only that app. The shared cluster keeps running for everything else.
 
-1. From inside your app's repo:
+> **Tip:** no app of your own yet? Clone the repo and try a ready-made example:
+> [`node-app`](https://github.com/psilvmoreira/localctl/tree/master/examples/node-app) (Node.js + Postgres),
+> [`python-app`](https://github.com/psilvmoreira/localctl/tree/master/examples/python-app) (Python + Redis), or
+> [`dotnet-api`](https://github.com/psilvmoreira/localctl/tree/master/examples/dotnet-api) (.NET).
 
-   ```
-   localctl app new
-   ```
+## Commands
 
-   This scaffolds `.local/config.json` and a generic `Tiltfile`. `localctl app new` asks for an app
-   name and port; edit `.local/config.json` afterward for anything else (env vars, database
-   dependencies, debug settings — see [App configuration](#app-configuration)).
+Run `localctl <command> --help` for every option.
 
-2. Deploy it: `localctl app up` (see above).
+<details open>
+<summary><b>Machine setup</b></summary>
 
-3. Check on it any time. Run from inside the app's own repo (or `-a <name>` from anywhere) for
-   that app's detail:
-
-   ```
-   $ localctl app status
-   node-app
-     namespace: node-app
-     ready:     1/1
-     url:       https://node-app.local.test
-     debug:     localhost:9229
-     dev loop:  running (pid 4815)
-     dependencies:
-       node-app-postgres  1/1
-   ```
-
-   From anywhere else (or with `-A`/`--all`), it's a table of every app:
-
-   ```
-   $ localctl app status
-   APP       NAMESPACE  READY  URL                         DEV LOOP
-   node-app  node-app   1/1    https://node-app.local.test  running (pid 4815)
-   ```
-
-4. When you're done:
-
-   ```
-   localctl app down
-   ```
-
-   Stops the background dev loop (if any) and tears down just this app; the shared cluster keeps
-   running for everything else.
-
-## CLI reference
-
-| Command | Purpose |
+| Command | Description |
 |---|---|
-| `localctl setup` | Install/repair the `default` project's infra (container engine, cluster, TLS, hosts). Idempotent. |
-| `localctl uninstall [-y]` | Remove everything `setup`/`profiles` set up: every project's cluster, registries, hosts entries, certs/state. |
-| `localctl doctor` | Quick health check of the active project's environment. |
-| `localctl app new` | Scaffold `.local/config.json` + `Tiltfile` in the current app repo. |
-| `localctl app up [-f]` | Build, deploy, and live-reload the app in the current directory. Runs detached in the background by default (survives closing the terminal) and prints the app's URL once ready; `-f`/`--foreground` runs the interactive Tilt UI instead. |
-| `localctl app down` | Stop the background dev loop (if any) and tear down the app deployed from the current directory. |
-| `localctl app reload [-a <name>]` | Force an immediate rebuild/redeploy of a running background dev loop, without waiting on a file change. |
-| `localctl app status [-a <name>] [-A]` | App detail (readiness, URL, debug port, dependencies, dev-loop state) when run inside an app repo or with `-a <name>`; a table of every app otherwise, or always with `-A`/`--all`. |
-| `localctl app logs <name> [-f]` | Tail logs for a deployed app. |
-| `localctl app exec [cmd...]` | Shell into the running app's pod (`kubectl exec`); defaults to `sh`. |
-| `localctl app prune [-y]` | Permanently delete an already-torn-down app's leftover data (dependency PVCs, secrets) - `app down` deliberately leaves these alone. |
-| `localctl app secrets set <KEY> [value]` | Set your own secret value (hidden prompt if not given inline) - stored as a real k8s Secret, never in `.local/config.json`. |
-| `localctl app secrets list` / `show [KEY]` / `unset <KEY>` | List which keys are set, reveal actual value(s), or remove one. |
+| `localctl setup` | Install or repair the infrastructure: container engine, cluster, TLS, hosts. Idempotent. |
+| `localctl doctor` | Health check of the active project's environment. |
 | `localctl hosts sync` / `list` | Manage the `*.local.test` entries in your hosts file. |
-| `localctl addons list` / `enable <name>` / `disable <name>` | Manage cluster-wide addons (e.g. `logging`, `monitoring`). |
-| `localctl addons status` | Every addon instance in the active project's cluster — per-app dependencies and cluster-wide addons — shown separately from your actual apps. |
-| `localctl profiles new <name>` | Create a project - its own cluster (Main project), or namespace-scoped under an existing one. |
-| `localctl profiles list` | List every project this machine knows about, nested under its Main (cluster) project. |
-| `localctl profiles switch <name>` | Make a project active - brings its cluster up if needed, applies its exclusive-teardown setting. |
-| `localctl profiles status` | Show the currently active project. |
+| `localctl uninstall [-y]` | Remove every cluster, registry, hosts entry, certificate and state file `localctl` created. |
 
-Run `localctl <command> --help` for options on any of these.
+</details>
 
-## App configuration
+<details open>
+<summary><b>Apps</b></summary>
 
-Everything about how an app deploys locally lives in that app repo's `.local/config.json`:
+| Command | Description |
+|---|---|
+| `localctl app new` | Scaffold `.local/config.json` and a `Tiltfile` in the current repository. |
+| `localctl app up [-f]` | Build, deploy and live-reload the app. Background by default; `-f` for the Tilt UI. |
+| `localctl app down` | Stop the dev loop and remove the app. Keeps its data. |
+| `localctl app reload [-a <name>]` | Force a rebuild and redeploy without waiting for a file change. |
+| `localctl app status [-a <name>] [-A]` | One app's detail inside its repository, or a table of every app. |
+| `localctl app logs <name> [-f]` | Show or follow an app's logs. |
+| `localctl app exec [cmd...]` | Open a shell (default `sh`) in the app's pod. |
+| `localctl app prune [-y]` | Delete leftover data (volumes, secrets) of apps already taken down. |
+| `localctl app secrets set <KEY> [value]` | Store a secret as a Kubernetes Secret, never in `config.json`. |
+| `localctl app secrets list` / `show [KEY]` / `unset <KEY>` | List, reveal or remove secrets. |
+
+</details>
+
+<details open>
+<summary><b>Addons and projects</b></summary>
+
+| Command | Description |
+|---|---|
+| `localctl addons list` / `status` | Show available addons and what is running in the cluster. |
+| `localctl addons enable <name>` / `disable <name>` | Turn a cluster-wide addon (`logging`, `monitoring`) on or off. |
+| `localctl profiles new <name>` | Create an isolated project: its own cluster, or a namespace in an existing one. |
+| `localctl profiles list` / `status` | Show every project, or the active one. |
+| `localctl profiles switch <name>` | Make a project active and start its cluster if needed. |
+
+</details>
+
+## Configuration
+
+Everything about how an app runs locally lives in its `.local/config.json`:
 
 ```json
 {
@@ -295,137 +274,125 @@ Everything about how an app deploys locally lives in that app repo's `.local/con
 }
 ```
 
-This resolves to `https://orders.local.test`, with a dedicated Postgres instance deployed
-alongside it. Point your editor's JSON schema support at `schema/app.schema.json` for
-autocomplete and validation as you type — `localctl app new` sets this up automatically via
-`"$schema"`.
+This deploys `orders-api` at `https://orders.local.test`, with its own Postgres instance and the
+Node.js debugger on `localhost:9229`.
 
-Full field-by-field reference: **[docs/config-schema.md](./docs/config-schema.md)**.
+A [JSON Schema](https://github.com/psilvmoreira/localctl/blob/master/schema/app.schema.json) is
+available for editor autocomplete and validation. Full field reference:
+[**Config schema**](https://psilvmoreira.github.io/localctl/config-schema/).
 
-## Multiple projects
+## Addons
 
-`default` is one shared cluster for everything - fine until you need real isolation (a second
-client's stack, a "staging-like" environment, or just apps you don't want sharing a cluster with
-your main work). From the folder you want it to apply to:
+Every addon is one `addon.yaml` file pointing at a published Helm chart. No code required.
 
-```
-localctl profiles new staging
-```
+| Addon | Scope | Enable with | Chart |
+|---|---|---|---|
+| `postgres` | Per app | `"dependencies": [{ "type": "postgres" }]` | Bitnami |
+| `redis` | Per app | `"dependencies": [{ "type": "redis" }]` | Bitnami |
+| `mongo` | Per app | `"dependencies": [{ "type": "mongo" }]` | Bitnami |
+| `logging` | Cluster | `localctl addons enable logging` → `https://grafana.local.test` | Grafana `loki-stack` |
+| `monitoring` | Cluster | `localctl addons enable monitoring` → `https://monitoring.local.test` | `prometheus-community` |
 
-Choose either your own cluster (a Main project) or a namespace-scoped slice of an existing one, and
-it writes `.local/project.json` there - every app under that folder, and any subfolder below it,
-now resolves to `staging` automatically, the same directory walk-up `.git`/`.claude` use.
-`localctl profiles list` / `status` / `switch <name>` manage which project is current.
+Per-app dependencies get their connection details injected into the app container, and a
+`wait-for-<type>` init container so the app never starts before its database is ready.
+To add your own addon, see [**Adding tools**](https://psilvmoreira.github.io/localctl/adding-tools/).
 
-Full mechanism (exclusive vs. concurrent clusters, namespace scoping, port handling):
-**[docs/architecture.md#multi-project-support](./docs/architecture.md#multi-project-support)**.
-
-## Architecture
-
-k3d cluster (Traefik ingress + local registry) → Tilt (build, push, live-sync) → `localctl`
-(config validation, manifest generation, infra lifecycle) → your app repo's
-`.local/config.json`. Nothing about an app's Kubernetes shape is hand-written; it's all generated
-from that one file by `cli/src/lib/manifestGen.js`.
-
-Full breakdown of every component and why it was chosen (including the Podman-specific handling):
-**[docs/architecture.md](./docs/architecture.md)**.
-
-## Debugging
-
-Set `"debug": { "enabled": true, "port": <port>, "type": "<node|python|go|java|dotnet>" }` in
-`.local/config.json` and the port is forwarded to `localhost` automatically while `localctl app up` is
-running — attach your debugger like you would to any local process. Per-language Dockerfile and
-`launch.json` patterns (including the live-reload watcher each language needs — `nodemon`,
-`uvicorn --reload`, `air`, Spring Boot DevTools): **[docs/debugging.md](./docs/debugging.md)**.
-
-## Adding tools (databases, logging, more)
-
-Every addon is one folder with one `addon.yaml` pointing at a real, published Helm chart — no JS.
-
-- **Per-app dependencies** (Postgres, Redis, MongoDB today, via Bitnami's own charts) are declared
-  in an app's `"dependencies"` array and deployed alongside it, isolated per app, with connection
-  details (host, port, credentials via a real k8s Secret) auto-injected into its container.
-- **Cluster-wide addons**: `logging` (Grafana Labs' own loki-stack chart, at
-  `https://grafana.local.test` once enabled, dashboard auto-provisioned from a file in the addon's
-  `config/` folder) and `monitoring` (prometheus-community's own Prometheus chart, at
-  `https://monitoring.local.test`) - shared infrastructure turned on once via `localctl addons
-  enable <name>`.
-
-Adding a new one — a message broker, a tracing backend, whatever's next — means finding its Helm
-chart and writing one `addon.yaml`: **[docs/adding-tools.md](./docs/adding-tools.md)**.
-
-## Uninstalling
+## How it works
 
 ```
-localctl uninstall                          # every project's cluster/registry, Podman VM config, hosts entries, certs/state
-npm uninstall -g @localctl/cli          # + the CLI itself, if you installed it via npm
-./bin/uninstall.sh   # or uninstall.ps1      # + the CLI itself, if you installed it via bin/bootstrap.sh's shim
+ .local/config.json ──► localctl ──► Kubernetes manifests ──► Tilt ──► k3d cluster
+   (your app repo)     validates      (generated, never        builds,     Traefik ingress
+                       + generates     hand-written)           pushes,     + local registry
+                                                               live-syncs  + *.local.test TLS
 ```
 
-Prompts for confirmation (skip with `-y`/`--yes`); every step is best-effort and safe to re-run.
-Deliberately left untouched: `k3d`/`kubectl`/`tilt`/`mkcert`/`node` themselves and mkcert's root CA
-trust (other projects on your machine may depend on either) — both are printed with the exact
-command to remove them yourself if you want them gone too.
+`localctl` validates the config, generates every manifest, and manages the cluster lifecycle.
+Tilt handles the build, push and live-sync loop. Full breakdown, including multi-project support
+and Podman handling: [**Architecture**](https://psilvmoreira.github.io/localctl/architecture/).
 
-Full details: **[docs/uninstalling.md](./docs/uninstalling.md)**.
+## Documentation
 
-## Troubleshooting
+The full documentation lives at **[psilvmoreira.github.io/localctl](https://psilvmoreira.github.io/localctl/)**.
 
-Hit something unexpected — a Podman-specific build/push error, a port conflict, a certificate
-warning, `ImagePullBackOff`, stale live-sync? Check
-**[docs/troubleshooting.md](./docs/troubleshooting.md)** first; it covers every issue found while
-building and testing this repo, with the actual cause and fix for each.
+| Guide | What's inside |
+|---|---|
+| [Getting started](https://psilvmoreira.github.io/localctl/getting-started/) | Install and first deploy, step by step |
+| [Architecture](https://psilvmoreira.github.io/localctl/architecture/) | Every component, why it was chosen, multi-project support |
+| [Config schema](https://psilvmoreira.github.io/localctl/config-schema/) | Every `.local/config.json` field |
+| [Debugging](https://psilvmoreira.github.io/localctl/debugging/) | Attach a debugger in Node, Python, Go, Java and .NET |
+| [Adding tools](https://psilvmoreira.github.io/localctl/adding-tools/) | Write your own per-app or cluster-wide addon |
+| [Troubleshooting](https://psilvmoreira.github.io/localctl/troubleshooting/) | Known issues, with cause and fix |
+| [Uninstalling](https://psilvmoreira.github.io/localctl/uninstalling/) | Full teardown reference |
+| [Releasing](https://psilvmoreira.github.io/localctl/releasing/) | How versions are cut and published |
 
-## Repo layout
+## Releases and versioning
+
+- Releases are fully automated: every merge to `master` is analysed by
+  [semantic-release](https://github.com/semantic-release/semantic-release), which picks the next
+  version, publishes to npm and creates a [GitHub Release](https://github.com/psilvmoreira/localctl/releases)
+  with notes and the package tarball.
+- Versions follow [Semantic Versioning](https://semver.org). Before `1.0.0`, minor versions may
+  contain breaking changes.
+- npm releases are published from GitHub Actions with
+  [provenance](https://docs.npmjs.com/generating-provenance-statements). The npm package page links
+  each version to the exact commit and workflow run that built it.
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+1. Fork the repository and create a branch.
+2. Make your change and run the tests:
+   ```sh
+   cd cli
+   npm ci
+   npm test            # every command loads, --version is correct
+   npm run test:pack   # the published package installs and runs
+   ```
+3. Open a pull request with a [Conventional Commits](https://www.conventionalcommits.org/) title.
+   The title decides the next version:
+
+   | Title | Release |
+   |---|---|
+   | `fix: ...` | Patch (`0.2.0` → `0.2.1`) |
+   | `feat: ...` | Minor (`0.2.1` → `0.3.0`) |
+   | `feat!: ...` | Major (`0.3.0` → `1.0.0`) |
+   | `docs:` `chore:` `ci:` `refactor:` `test:` | No release |
+
+<details>
+<summary><b>Repository layout</b></summary>
 
 ```
 localctl/
-├── bin/                  thin installer stubs (macOS + Windows) - install Node/the CLI, then
-│                         hand off to `localctl setup`/`localctl uninstall`
-├── cluster/              k3d cluster definition + cluster-level manifests (TLS store, namespaces)
-├── cli/                  the localctl Node.js CLI
-│   ├── src/commands/     one file per CLI subcommand (setup, uninstall, up, new, profiles, ...)
-│   ├── src/lib/          config validation, manifest generation, project/cluster/Podman/hosts handling
-│   │   └── addons/       per-app (postgres/redis/mongo) + cluster/ (logging, monitoring) addons
-│   └── templates/        generic Tiltfile copied into app repos by `localctl app new`
-├── schema/               JSON Schema for .local/config.json (editor autocomplete)
-├── examples/             ready-to-run sample apps (Node.js + Postgres, Python + Redis, .NET)
-└── docs/                 full documentation - also published as the docs site, see below
+├── cli/                 the localctl CLI (published to npm as @localctl/cli)
+│   ├── bin/             executable entry point
+│   ├── src/commands/    one file per command
+│   ├── src/lib/         config validation, manifest generation, cluster/hosts/Podman handling
+│   │   └── addons/      built-in addons (postgres, redis, mongo, logging, monitoring)
+│   ├── templates/       Tiltfile copied into apps by `localctl app new`
+│   └── scripts/         packaging and test scripts
+├── cluster/manifests/   cluster-level manifests (TLS store, addon namespace)
+├── schema/              JSON Schema for .local/config.json
+├── examples/            ready-to-run sample apps
+├── docs/                documentation site (MkDocs Material, deployed to GitHub Pages)
+└── bin/                 bootstrap and uninstall scripts for source installs
 ```
 
-## Documentation index
+</details>
 
-- [docs/index.md](./docs/index.md) — documentation site home
-- [docs/getting-started.md](./docs/getting-started.md) — the install/quickstart flow, in more detail
-- [docs/architecture.md](./docs/architecture.md) — every component and why it was chosen, with diagrams
-- [docs/config-schema.md](./docs/config-schema.md) — full `.local/config.json` reference
-- [docs/adding-tools.md](./docs/adding-tools.md) — add new per-app or cluster-wide addons
-- [docs/debugging.md](./docs/debugging.md) — attach a debugger, per language
-- [docs/uninstalling.md](./docs/uninstalling.md) — full teardown reference
-- [docs/troubleshooting.md](./docs/troubleshooting.md) — known issues and fixes
+## Uninstalling
 
-## Docs Site
-
-Everything under `docs/` is also published as a [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)
-site — search, dark/light mode, and the Mermaid diagrams in [Architecture](./docs/architecture.md)
-rendered properly (GitHub renders Mermaid too, but the site's theme is nicer for reading).
-
-**One-time setup**, once this repo has a real GitHub remote:
-
-1. In `mkdocs.yml`, replace every `USERNAME` with your GitHub username (or org), and in this
-   README's link at the top.
-2. Push to GitHub, then in the repo's **Settings → Pages**, set **Source** to **Deploy from a
-   branch** and **Branch** to **`gh-pages`** / **`/ (root)`**. (The first push of
-   `.github/workflows/docs.yml` below creates that branch for you — the option won't appear in the
-   dropdown until after that first run.)
-
-From then on, **every push to `master`** rebuilds and redeploys the site automatically
-(`.github/workflows/docs.yml`) — nothing to run by hand.
-
-To preview locally before pushing:
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install mkdocs-material
-mkdocs serve   # http://127.0.0.1:8000, live-reloads on save
+```sh
+localctl uninstall              # clusters, registries, hosts entries, certificates, state
+npm uninstall -g @localctl/cli  # the CLI itself
 ```
+
+`localctl uninstall` asks for confirmation (skip with `-y`) and is safe to re-run. It leaves the
+shared tools (`k3d`, `kubectl`, `tilt`, `mkcert`, `node`) and mkcert's root CA installed, since
+other projects may use them. It prints the exact commands to remove them too. Installed from
+source with the bootstrap script? Use `./bin/uninstall.sh` or `./bin/uninstall.ps1` instead.
+Details: [**Uninstalling**](https://psilvmoreira.github.io/localctl/uninstalling/).
+
+## License
+
+[MIT](https://github.com/psilvmoreira/localctl/blob/master/LICENSE) © Pedro Moreira

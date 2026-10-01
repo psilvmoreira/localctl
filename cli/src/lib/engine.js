@@ -1,4 +1,12 @@
 const { commandExists, capture } = require('./exec');
+const logger = require('./logger');
+
+// Support status per engine lives in cli/package.json ("localctl.containerEngines"), so marking an
+// engine as tested is a one-word config change, not a code change. "tested" means verified end to
+// end; anything else (or an engine missing from the map) gets the experimental warning.
+const { localctl: { containerEngines = {} } = {} } = require('../../package.json');
+const ENGINE_LABELS = { docker: 'Docker Desktop', podman: 'Podman', 'rancher-desktop': 'Rancher Desktop' };
+const ISSUES_URL = 'https://github.com/psilvmoreira/localctl/issues';
 
 // Returns { engine, bin } - `engine` names what's actually running (docker/podman/rancher-desktop),
 // `bin` is the CLI to drive it with (usually the same, except Rancher Desktop, which exposes
@@ -17,4 +25,12 @@ function detectEngine() {
   return null;
 }
 
-module.exports = { detectEngine };
+function warnIfExperimental(engine) {
+  if (containerEngines[engine] === 'tested') return;
+  const tested = Object.keys(containerEngines).filter((e) => containerEngines[e] === 'tested');
+  const testedList = tested.map((e) => ENGINE_LABELS[e] || e).join(', ') || 'none';
+  logger.warn(`${ENGINE_LABELS[engine] || engine} support is experimental - fully tested so far: ${testedList}.`);
+  logger.warn(`If something breaks, please report it: ${ISSUES_URL}`);
+}
+
+module.exports = { detectEngine, warnIfExperimental };
