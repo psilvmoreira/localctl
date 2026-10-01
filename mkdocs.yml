@@ -1,7 +1,8 @@
 site_name: localctl
 site_description: A local Kubernetes dev platform for macOS and Windows - one CLI, one cluster, one subdomain per app.
-repo_name: localctl
-repo_url: https://github.com/USERNAME/localctl
+site_url: https://psilvmoreira.github.io/localctl/
+repo_name: psilvmoreira/localctl
+repo_url: https://github.com/psilvmoreira/localctl
 edit_uri: edit/main/docs/
 
 docs_dir: docs
@@ -91,6 +92,6 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/USERNAME/localctl
+      link: https://github.com/psilvmoreira/localctl
 
 copyright: Copyright &copy; localctl

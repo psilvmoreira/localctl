@@ -1,6 +1,6 @@
 # localctl
 
-📖 **[Full documentation site](https://USERNAME.github.io/localctl/)** — same content as
+📖 **[Full documentation site](https://psilvmoreira.github.io/localctl/)** — same content as
 below, plus diagrams, search, and a nicer read. Update the `USERNAME`/`repo_url` placeholders in
 `mkdocs.yml` and this line once this repo has a real GitHub remote (see [Docs
 Site](#docs-site) below for how it's built/deployed).

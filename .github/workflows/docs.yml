@@ -34,7 +34,8 @@ jobs:
           key: mkdocs-material-${{ hashFiles('mkdocs.yml') }}
 
       - name: Install MkDocs Material
-        run: pip install mkdocs-material
+        # Pinned below MkDocs 2.0: it drops the plugin/theme system Material for MkDocs relies on.
+        run: pip install "mkdocs>=1.6,<2" "mkdocs-material>=9.7,<10"
 
       - name: Build (strict - fails on broken links/config)
         run: mkdocs build --strict

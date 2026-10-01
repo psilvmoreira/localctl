@@ -17,7 +17,7 @@ $ localctl app up
 ```
 
 [Get started :material-arrow-right:](getting-started.md){ .md-button .md-button--primary }
-[View on GitHub :fontawesome-brands-github:](https://github.com/USERNAME/localctl){ .md-button }
+[View on GitHub :fontawesome-brands-github:](https://github.com/psilvmoreira/localctl){ .md-button }
 
 ## Why localctl
 
