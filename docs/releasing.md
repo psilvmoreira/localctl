@@ -49,10 +49,11 @@ Push or merge to a `beta` branch. Versions look like `0.3.0-beta.1` and are publ
 
 ## What CI checks
 
-`ci.yml` runs on every PR:
+Every PR runs:
 
-- **pr-title** - the title is a valid Conventional Commit.
-- **test** on Linux/macOS/Windows × Node 18/22:
+- **pr-title** (`pr-title.yml`) - the title is a valid Conventional Commit. Re-runs when you
+  edit the title.
+- **test** (`ci.yml`) on Linux/macOS/Windows × Node 18/22:
     - `npm test` - every command module loads, `--version` matches `package.json`.
     - `npm run test:pack` - builds the real tarball, installs it into a throwaway prefix, runs the
       installed binary. Catches files missing from the package before users do.

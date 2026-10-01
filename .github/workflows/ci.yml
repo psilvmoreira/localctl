@@ -11,17 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pr-title:
-    # PRs are squash-merged, so the PR title becomes the commit on master - and semantic-release
-    # reads that commit to decide the next version. feat: -> minor, fix: -> patch, feat!: -> major.
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    steps:
-      - uses: amannn/action-semantic-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   test:
     name: test (${{ matrix.os }}, node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
