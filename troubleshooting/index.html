@@ -1,0 +1,1574 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A local Kubernetes dev platform for macOS and Windows - one CLI, one cluster, one subdomain per app.">
+      
+      
+      
+        <link rel="canonical" href="https://psilvmoreira.github.io/localctl/troubleshooting/">
+      
+      
+        <link rel="prev" href="../uninstalling/">
+      
+      
+        <link rel="next" href="../releasing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Troubleshooting - localctl</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#troubleshooting" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="localctl" class="md-header__button md-logo" aria-label="localctl" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.95 13.5h-.23c-.18.11-.26.32-.18.5l.86 2.11c.83-.53 1.46-1.32 1.79-2.25l-2.23-.36zm-3.45.29a.415.415 0 0 0-.38-.29h-.08l-2.22.37c.33.92.96 1.7 1.79 2.23l.85-2.07V14c.04-.05.04-.14.04-.21m1.83.81a.38.38 0 0 0-.51-.15c-.07.05-.12.08-.15.15h-.01l-1.09 1.97c.78.26 1.62.31 2.43.12.14-.03.29-.07.43-.12l-1.09-1.97zm3.45-4.57L14.1 11.5l.01.03a.37.37 0 0 0-.04.53q.075.09.18.12l.01.01 2.17.62c.07-.97-.14-1.95-.65-2.78m-3.11.16c.01.21.18.37.39.36.08 0 .15-.02.21-.05h.01l1.83-1.31a4.45 4.45 0 0 0-2.57-1.24zm-1.94.31c.17.11.4.08.52-.09.05-.06.07-.13.08-.21h.01l.12-2.25c-.15.02-.3.05-.46.08-.8.18-1.54.58-2.12 1.16l1.84 1.31zm-.99 1.69c.2-.05.32-.26.26-.46 0-.08-.05-.14-.11-.19v-.01L8.21 10c-.52.86-.74 1.84-.63 2.82l2.16-.62zm1.64.66.62.3.62-.3.15-.67-.43-.53h-.69l-.43.53zm10.89 1.32L20.5 6.5c-.09-.42-.37-.76-.74-.94l-7.17-3.43c-.37-.17-.81-.17-1.19 0L4.24 5.56c-.37.18-.65.52-.74.94l-1.77 7.67c-.05.2-.05.4 0 .59.01.06.03.12.05.18.03.09.08.19.13.27.03.04.05.08.09.11l4.95 6.18c.02 0 .05.04.05.06.1.09.19.16.28.22.12.08.26.14.4.17.11.05.23.05.32.05h8.12c.07 0 .14-.03.2-.05.05-.01.1-.03.14-.04.04-.02.07-.03.11-.05.05-.02.1-.05.15-.08.12-.08.23-.18.33-.28l.15-.2 4.8-5.98c.1-.12.17-.25.22-.38.02-.06.04-.12.05-.18.05-.19.05-.4 0-.59m-7.43 2.99c.02.06.04.12.07.17-.04.08-.06.17-.03.26.12.24.23.46.38.68.08.11.16.23.24.34 0 .03.03.08.04.12.12.2.06.46-.15.59s-.47.05-.59-.15c-.01-.03-.02-.05-.03-.08-.02-.03-.04-.09-.06-.09-.05-.15-.09-.28-.12-.41-.09-.25-.17-.49-.3-.72a.38.38 0 0 0-.21-.14l-.08-.16c-1.29.48-2.7.48-3.97-.01l-.1.18c-.07.01-.14.04-.19.09-.14.24-.24.49-.33.77-.03.13-.07.26-.12.4-.02 0-.04.07-.06.1a.43.43 0 0 1-.81-.29c.01-.03.03-.05.04-.08.04-.03.04-.08.04-.11.09-.12.16-.23.24-.35.16-.21.29-.45.39-.69a.54.54 0 0 0-.03-.25l.07-.18a5.6 5.6 0 0 1-2.47-3.09l-.2.03a.4.4 0 0 0-.23-.09c-.27.05-.51.13-.77.22-.11.06-.24.11-.37.15-.03.01-.07.02-.13.03a.44.44 0 0 1-.54-.27c-.07-.23.04-.47.28-.55.02 0 .05-.01.08-.01v-.01h.01l.11-.02c.14-.04.28-.04.41-.04.26 0 .52-.06.77-.12.08-.05.14-.11.19-.19l.19-.05c-.21-1.36.1-2.73.86-3.87l-.14-.12c0-.09-.03-.18-.08-.25-.2-.17-.41-.32-.64-.45q-.18-.09-.36-.21c-.02-.02-.06-.05-.08-.07l-.01-.01c-.2-.16-.25-.42-.11-.63.09-.1.21-.15.35-.15q.165.015.3.12l.09.07c.1.09.19.2.28.3.18.19.37.37.58.52.08.04.17.05.26.03l.15.11c.75-.8 1.73-1.36 2.8-1.6.25-.06.52-.1.78-.12l.01-.18a.45.45 0 0 0 .14-.23c.01-.26-.01-.52-.05-.77-.03-.13-.05-.27-.06-.41V5.1c-.02-.24.15-.45.39-.48s.44.15.47.38v.22c-.01.14-.03.28-.06.41-.04.25-.06.51-.05.77.02.1.07.17.14.22l.01.19c1.36.12 2.62.73 3.56 1.72l.16-.12c.09.02.18.01.26-.03.21-.15.41-.33.58-.52.09-.1.18-.2.28-.3.03-.02.07-.06.1-.06.17-.18.44-.18.59 0 .19.16.18.43 0 .6 0 .02-.03.04-.06.06a2.495 2.495 0 0 1-.44.28c-.23.13-.45.28-.64.45-.06.07-.09.15-.08.24l-.16.14a5.44 5.44 0 0 1 .88 3.86l.19.05c.04.08.11.14.19.18.25.07.51.11.77.14h.41c.03.03.08.04.12.05.24.03.4.25.37.49-.05.23-.24.4-.48.37-.03-.01-.07-.01-.07-.02v-.01c-.06 0-.1-.01-.14-.02q-.195-.06-.36-.15c-.26-.1-.5-.17-.77-.21-.09 0-.17 0-.23.08-.07-.01-.13-.02-.19-.03-.41 1.31-1.31 2.41-2.47 3.11"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            localctl
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Troubleshooting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/psilvmoreira/localctl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    psilvmoreira/localctl
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../config-schema/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Config Schema
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../adding-tools/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Adding Tools
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../debugging/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Debugging
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../uninstalling/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Uninstalling
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../releasing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Releasing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="localctl" class="md-nav__button md-logo" aria-label="localctl" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.95 13.5h-.23c-.18.11-.26.32-.18.5l.86 2.11c.83-.53 1.46-1.32 1.79-2.25l-2.23-.36zm-3.45.29a.415.415 0 0 0-.38-.29h-.08l-2.22.37c.33.92.96 1.7 1.79 2.23l.85-2.07V14c.04-.05.04-.14.04-.21m1.83.81a.38.38 0 0 0-.51-.15c-.07.05-.12.08-.15.15h-.01l-1.09 1.97c.78.26 1.62.31 2.43.12.14-.03.29-.07.43-.12l-1.09-1.97zm3.45-4.57L14.1 11.5l.01.03a.37.37 0 0 0-.04.53q.075.09.18.12l.01.01 2.17.62c.07-.97-.14-1.95-.65-2.78m-3.11.16c.01.21.18.37.39.36.08 0 .15-.02.21-.05h.01l1.83-1.31a4.45 4.45 0 0 0-2.57-1.24zm-1.94.31c.17.11.4.08.52-.09.05-.06.07-.13.08-.21h.01l.12-2.25c-.15.02-.3.05-.46.08-.8.18-1.54.58-2.12 1.16l1.84 1.31zm-.99 1.69c.2-.05.32-.26.26-.46 0-.08-.05-.14-.11-.19v-.01L8.21 10c-.52.86-.74 1.84-.63 2.82l2.16-.62zm1.64.66.62.3.62-.3.15-.67-.43-.53h-.69l-.43.53zm10.89 1.32L20.5 6.5c-.09-.42-.37-.76-.74-.94l-7.17-3.43c-.37-.17-.81-.17-1.19 0L4.24 5.56c-.37.18-.65.52-.74.94l-1.77 7.67c-.05.2-.05.4 0 .59.01.06.03.12.05.18.03.09.08.19.13.27.03.04.05.08.09.11l4.95 6.18c.02 0 .05.04.05.06.1.09.19.16.28.22.12.08.26.14.4.17.11.05.23.05.32.05h8.12c.07 0 .14-.03.2-.05.05-.01.1-.03.14-.04.04-.02.07-.03.11-.05.05-.02.1-.05.15-.08.12-.08.23-.18.33-.28l.15-.2 4.8-5.98c.1-.12.17-.25.22-.38.02-.06.04-.12.05-.18.05-.19.05-.4 0-.59m-7.43 2.99c.02.06.04.12.07.17-.04.08-.06.17-.03.26.12.24.23.46.38.68.08.11.16.23.24.34 0 .03.03.08.04.12.12.2.06.46-.15.59s-.47.05-.59-.15c-.01-.03-.02-.05-.03-.08-.02-.03-.04-.09-.06-.09-.05-.15-.09-.28-.12-.41-.09-.25-.17-.49-.3-.72a.38.38 0 0 0-.21-.14l-.08-.16c-1.29.48-2.7.48-3.97-.01l-.1.18c-.07.01-.14.04-.19.09-.14.24-.24.49-.33.77-.03.13-.07.26-.12.4-.02 0-.04.07-.06.1a.43.43 0 0 1-.81-.29c.01-.03.03-.05.04-.08.04-.03.04-.08.04-.11.09-.12.16-.23.24-.35.16-.21.29-.45.39-.69a.54.54 0 0 0-.03-.25l.07-.18a5.6 5.6 0 0 1-2.47-3.09l-.2.03a.4.4 0 0 0-.23-.09c-.27.05-.51.13-.77.22-.11.06-.24.11-.37.15-.03.01-.07.02-.13.03a.44.44 0 0 1-.54-.27c-.07-.23.04-.47.28-.55.02 0 .05-.01.08-.01v-.01h.01l.11-.02c.14-.04.28-.04.41-.04.26 0 .52-.06.77-.12.08-.05.14-.11.19-.19l.19-.05c-.21-1.36.1-2.73.86-3.87l-.14-.12c0-.09-.03-.18-.08-.25-.2-.17-.41-.32-.64-.45q-.18-.09-.36-.21c-.02-.02-.06-.05-.08-.07l-.01-.01c-.2-.16-.25-.42-.11-.63.09-.1.21-.15.35-.15q.165.015.3.12l.09.07c.1.09.19.2.28.3.18.19.37.37.58.52.08.04.17.05.26.03l.15.11c.75-.8 1.73-1.36 2.8-1.6.25-.06.52-.1.78-.12l.01-.18a.45.45 0 0 0 .14-.23c.01-.26-.01-.52-.05-.77-.03-.13-.05-.27-.06-.41V5.1c-.02-.24.15-.45.39-.48s.44.15.47.38v.22c-.01.14-.03.28-.06.41-.04.25-.06.51-.05.77.02.1.07.17.14.22l.01.19c1.36.12 2.62.73 3.56 1.72l.16-.12c.09.02.18.01.26-.03.21-.15.41-.33.58-.52.09-.1.18-.2.28-.3.03-.02.07-.06.1-.06.17-.18.44-.18.59 0 .19.16.18.43 0 .6 0 .02-.03.04-.06.06a2.495 2.495 0 0 1-.44.28c-.23.13-.45.28-.64.45-.06.07-.09.15-.08.24l-.16.14a5.44 5.44 0 0 1 .88 3.86l.19.05c.04.08.11.14.19.18.25.07.51.11.77.14h.41c.03.03.08.04.12.05.24.03.4.25.37.49-.05.23-.24.4-.48.37-.03-.01-.07-.01-.07-.02v-.01c-.06 0-.1-.01-.14-.02q-.195-.06-.36-.15c-.26-.1-.5-.17-.77-.21-.09 0-.17 0-.23.08-.07-.01-.13-.02-.19-.03-.41 1.31-1.31 2.41-2.47 3.11"/></svg>
+
+    </a>
+    localctl
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/psilvmoreira/localctl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    psilvmoreira/localctl
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adding-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../uninstalling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstalling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-upgenerate-manifests-fails-with-a-helm-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app up/generate-manifests fails with a helm error
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pod-keeps-restarting-crashloopbackoff-right-after-it-starts-serving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pod keeps restarting (CrashLoopBackOff) right after it starts serving
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-up-fails-with-missing-secret-value-for-x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app up fails with "Missing secret value for: X"
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-doctor-shows-for-something" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl doctor shows [!!] for something
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kubectl-commands-fail-wrong-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kubectl commands fail / wrong cluster
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-wait-for-it-never-finishes-pod-stuck-on-init01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency wait-for-it never finishes (pod stuck on Init:0/1)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-blocks-the-site-outright-no-proceed-anyway-option-hsts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser blocks the site outright, no "proceed anyway" option (HSTS)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-says-the-certificate-isnt-trusted-but-does-let-you-click-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser says the certificate isn't trusted (but does let you click through)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#subdomainlocaltest-doesnt-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        &lt;subdomain&gt;.local.test doesn't resolve
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k3d-cluster-create-fails-with-network-not-found-bridge-podman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        k3d cluster create fails with network not found: bridge (Podman)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#port-80-or-443-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port 80 or 443 already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registry-container-fails-to-start-address-already-in-use-on-port-5000" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registry container fails to start: address already in use on port 5000
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tilt-builds-but-the-pod-shows-imagepullbackoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tilt builds but the pod shows ImagePullBackOff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#podman-build-fails-with-unable-to-upgrade-to-h2c-received-404" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Podman: build fails with unable to upgrade to h2c, received 404
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#podman-push-fails-with-server-gave-http-response-to-https-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Podman: push fails with server gave HTTP response to HTTPS client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forcing-an-immediate-rebuildredeploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forcing an immediate rebuild/redeploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-status-shows-a-dev-loop-running-that-clearly-isnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app status shows a dev loop "running" that clearly isn't
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-up-fails-tilt-exits-immediately-with-address-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app up fails: Tilt exits immediately with address already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#starting-fresh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting fresh
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no-cluster-running-for-project-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No cluster running for project "&lt;name&gt;"
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-upgenerate-manifests-fails-with-a-helm-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app up/generate-manifests fails with a helm error
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pod-keeps-restarting-crashloopbackoff-right-after-it-starts-serving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pod keeps restarting (CrashLoopBackOff) right after it starts serving
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-up-fails-with-missing-secret-value-for-x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app up fails with "Missing secret value for: X"
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-doctor-shows-for-something" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl doctor shows [!!] for something
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kubectl-commands-fail-wrong-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kubectl commands fail / wrong cluster
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-wait-for-it-never-finishes-pod-stuck-on-init01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency wait-for-it never finishes (pod stuck on Init:0/1)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-blocks-the-site-outright-no-proceed-anyway-option-hsts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser blocks the site outright, no "proceed anyway" option (HSTS)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-says-the-certificate-isnt-trusted-but-does-let-you-click-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser says the certificate isn't trusted (but does let you click through)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#subdomainlocaltest-doesnt-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        &lt;subdomain&gt;.local.test doesn't resolve
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k3d-cluster-create-fails-with-network-not-found-bridge-podman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        k3d cluster create fails with network not found: bridge (Podman)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#port-80-or-443-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port 80 or 443 already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registry-container-fails-to-start-address-already-in-use-on-port-5000" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registry container fails to start: address already in use on port 5000
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tilt-builds-but-the-pod-shows-imagepullbackoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tilt builds but the pod shows ImagePullBackOff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#podman-build-fails-with-unable-to-upgrade-to-h2c-received-404" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Podman: build fails with unable to upgrade to h2c, received 404
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#podman-push-fails-with-server-gave-http-response-to-https-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Podman: push fails with server gave HTTP response to HTTPS client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forcing-an-immediate-rebuildredeploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forcing an immediate rebuild/redeploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-status-shows-a-dev-loop-running-that-clearly-isnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app status shows a dev loop "running" that clearly isn't
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localctl-app-up-fails-tilt-exits-immediately-with-address-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        localctl app up fails: Tilt exits immediately with address already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#starting-fresh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting fresh
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no-cluster-running-for-project-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No cluster running for project "&lt;name&gt;"
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/psilvmoreira/localctl/edit/master/docs/troubleshooting.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
+<h2 id="localctl-app-upgenerate-manifests-fails-with-a-helm-error"><code>localctl app up</code>/<code>generate-manifests</code> fails with a <code>helm</code> error<a class="headerlink" href="#localctl-app-upgenerate-manifests-fails-with-a-helm-error" title="Permanent link">&para;</a></h2>
+<p>Per-app database dependencies (<code>postgres</code>/<code>redis</code>/<code>mongo</code>) and cluster-wide addons are real Helm
+charts, pulled from their real chart repos on first use (<code>cli/src/lib/addonLoader.js</code>). This means:</p>
+<ul>
+<li><strong>It needs network access</strong> the first time a given chart+version is used (results are cached by
+  Helm afterward, per its own local cache — subsequent runs work offline).</li>
+<li><strong>Bitnami's chart repo redirects through Broadcom's infrastructure</strong> (<code>charts.bitnami.com</code> →
+  <code>repo.broadcom.com</code>) since VMware/Bitnami's acquisition — this works as of writing but Broadcom
+  has been actively restructuring free access to these charts, so if <code>postgres</code>/<code>redis</code>/<code>mongo</code>
+  suddenly stop resolving, check <code>cli/src/lib/addons/&lt;type&gt;/addon.yaml</code>'s <code>chart.repo</code> first; it
+  may need pointing at a different Postgres/Redis/MongoDB chart entirely.</li>
+<li><strong>A <code>helm template failed</code> error names the actual chart problem</strong> — usually a values field that
+  doesn't exist for the version pinned in that addon's <code>addon.yaml</code> (chart maintainers do rename
+  values between major versions). Check <code>helm show values &lt;repo&gt;/&lt;chart&gt; --version &lt;version&gt;</code>
+  against what the addon's <code>values:</code> block sets.</li>
+</ul>
+<h2 id="pod-keeps-restarting-crashloopbackoff-right-after-it-starts-serving">Pod keeps restarting (<code>CrashLoopBackOff</code>) right after it starts serving<a class="headerlink" href="#pod-keeps-restarting-crashloopbackoff-right-after-it-starts-serving" title="Permanent link">&para;</a></h2>
+<p>Every app gets a <code>readinessProbe</code>/<code>livenessProbe</code> by default - a plain TCP check on <code>port</code> unless
+you set <code>probes.readiness</code>/<code>.liveness</code> (see <a href="../config-schema/#probes">Config Schema</a>). If your
+app takes longer than the default <code>initialDelaySeconds</code> (3s readiness / 10s liveness) to start
+accepting connections - a slow framework boot, a migration running first - the liveness probe can
+kill it before it's actually up. Raise <code>initialDelaySeconds</code> for the slow one in
+<code>.local/config.json</code>, no code change needed.</p>
+<h2 id="localctl-app-up-fails-with-missing-secret-value-for-x"><code>localctl app up</code> fails with "Missing secret value for: X"<a class="headerlink" href="#localctl-app-up-fails-with-missing-secret-value-for-x" title="Permanent link">&para;</a></h2>
+<p><code>.local/config.json</code>'s <code>secrets</code> array declares names only - the value has to be set separately,
+once, with <code>localctl app secrets set X</code> (prompts for it, hidden, if you don't pass it inline). This
+is deliberate: it's the same never-plaintext principle addon-generated credentials already follow,
+just for values you supply yourself. <code>localctl app secrets list</code> shows which declared keys still
+need a value; <code>localctl app secrets show [KEY]</code> reveals the actual value(s) if you need to check one.</p>
+<h2 id="localctl-doctor-shows-for-something"><code>localctl doctor</code> shows <code>[!!]</code> for something<a class="headerlink" href="#localctl-doctor-shows-for-something" title="Permanent link">&para;</a></h2>
+<p>Re-run <code>localctl setup</code> (or <code>localctl profiles switch &lt;name&gt;</code> for a non-default project) — every
+step is idempotent and safe to re-run.</p>
+<h2 id="kubectl-commands-fail-wrong-cluster"><code>kubectl</code> commands fail / wrong cluster<a class="headerlink" href="#kubectl-commands-fail-wrong-cluster" title="Permanent link">&para;</a></h2>
+<p>Every <code>localctl</code> command that talks to a cluster (<code>app up/down/status/exec/prune/secrets/logs</code>,
+<code>doctor</code>, <code>hosts</code>, <code>addons</code>) already points <code>kubectl</code> at the right project's context itself before
+doing anything else (<code>ensureClusterUp()</code> - see <a href="../architecture/#multi-project-support">Architecture</a>
+for exactly which project each command resolves to), so you shouldn't need to do this by hand for
+<code>localctl</code> itself. This only matters if you're driving <code>kubectl</code>/<code>helm</code>/<code>tilt</code> <strong>directly</strong>,
+bypassing <code>localctl</code>, and work with other clusters too:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl config get-contexts          # k3d-local-dev is "default"; k3d-local-dev-&lt;name&gt; for others
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl config use-context k3d-local-dev
+</span></code></pre></div>
+<h2 id="dependency-wait-for-it-never-finishes-pod-stuck-on-init01">Dependency wait-for-it never finishes (pod stuck on <code>Init:0/1</code>)<a class="headerlink" href="#dependency-wait-for-it-never-finishes-pod-stuck-on-init01" title="Permanent link">&para;</a></h2>
+<p><code>kubectl get pods</code> showing <code>Init:0/1</code> forever, on an app with a <code>dependencies</code> entry, means its
+<code>wait-for-&lt;type&gt;</code> init container hasn't seen that dependency's Service accept a connection yet (see
+<a href="../adding-tools/#you-get-a-wait-for-it-init-container-for-free">Adding Tools</a>). Check the
+dependency itself first, not the app:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl get pods -n &lt;namespace&gt;                       # is the dependency's own pod Running?
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl logs &lt;app-pod&gt; -c wait-for-&lt;type&gt;              # what host:port is it retrying?
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kubectl describe pod &lt;dependency-pod&gt; -n &lt;namespace&gt;   # why isn't IT coming up (PVC pending, image pull, ...)
+</span></code></pre></div>
+<p>Fixing the dependency's own pod unblocks the init container automatically on its next retry (every
+1s) - there's nothing to restart by hand.</p>
+<h2 id="browser-blocks-the-site-outright-no-proceed-anyway-option-hsts">Browser blocks the site outright, no "proceed anyway" option (HSTS)<a class="headerlink" href="#browser-blocks-the-site-outright-no-proceed-anyway-option-hsts" title="Permanent link">&para;</a></h2>
+<p>This is not a trust-store problem, and clicking around Firefox/Chrome's advanced settings won't
+fix it. If the browser says something like <em>"Someone pretending to be this site could try to
+steal..."</em>, <em>"you can't add an exception"</em>, or mentions <strong>HSTS</strong>, the domain suffix itself is the
+problem: <code>.dev</code> is a real, live, Google-operated top-level domain that's on the browser HSTS
+preload list <em>at the TLD level</em> — every browser force-HTTPS's <strong>any</strong> <code>.dev</code> domain, including
+made-up ones, with no click-through, regardless of hosts file entries or a trusted local CA. This
+is why the domain here is <code>local.test</code> (RFC 2606, reserved for testing, never publicly resolvable,
+never HSTS-preloaded) and not <code>local.dev</code>. If you're hitting this, you're most likely on an old
+checkout from before that change — pull the latest, re-run <code>localctl setup</code>, and use
+<code>*.local.test</code> URLs instead of any old <code>*.local.dev</code> ones (and note that <code>local.dev</code> itself is a
+real domain someone else owns — don't be surprised if an old bookmark for it loads a stranger's
+website instead of a local dev error).</p>
+<h2 id="browser-says-the-certificate-isnt-trusted-but-does-let-you-click-through">Browser says the certificate isn't trusted (but does let you click through)<a class="headerlink" href="#browser-says-the-certificate-isnt-trusted-but-does-let-you-click-through" title="Permanent link">&para;</a></h2>
+<p>This is the normal, expected kind of warning — a trust-store issue, not the HSTS one above.
+<code>mkcert -install</code> (run by <code>localctl setup</code>) adds a local CA to your system/browser trust store. If
+it's still untrusted:
+- <strong>Firefox keeps its own trust store</strong>, separate from the OS keychain that Safari/Chrome use.
+  <code>mkcert -install</code> can only add the CA there automatically if <code>certutil</code> is installed
+  (<code>brew install nss</code> on macOS) — without it you'll see exactly this warning in Firefox, in the
+  original <code>localctl setup</code> output where mkcert says <code>"certutil" is not available</code>, and nowhere else.
+  Install <code>nss</code> and re-run <code>mkcert -install</code> (or <code>localctl setup</code>), or import the CA into
+  Firefox manually (<code>mkcert -CAROOT</code> shows where the CA file lives).
+- Re-run <code>localctl setup</code> to regenerate and reapply the <code>*.local.test</code> certificate.</p>
+<h2 id="subdomainlocaltest-doesnt-resolve"><code>&lt;subdomain&gt;.local.test</code> doesn't resolve<a class="headerlink" href="#subdomainlocaltest-doesnt-resolve" title="Permanent link">&para;</a></h2>
+<p>Run <code>localctl hosts sync</code>. If it reports a permissions error, it prints the exact <code>sudo</code>/elevated
+command to run — copy-paste it. Then confirm with <code>localctl hosts list</code> and:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a># macOS/Linux
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>cat /etc/hosts | grep local.test
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a># Windows (elevated PowerShell)
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Get-Content C:\Windows\System32\drivers\etc\hosts | Select-String local.test
+</span></code></pre></div>
+<h2 id="k3d-cluster-create-fails-with-network-not-found-bridge-podman"><code>k3d cluster create</code> fails with <code>network not found: bridge</code> (Podman)<a class="headerlink" href="#k3d-cluster-create-fails-with-network-not-found-bridge-podman" title="Permanent link">&para;</a></h2>
+<p>Podman's default network is named <code>podman</code>, not <code>bridge</code> — Docker is the one with a network
+literally named <code>bridge</code>. This repo avoids the k3d code path that assumes it exists (the local
+registry is run as a plain container by <code>clusterProvision.js</code> instead of via k3d's
+<code>registries.create</code>), so a clean setup should not hit this. If you do:</p>
+<ol>
+<li>Clean up the partial cluster: <code>k3d cluster delete &lt;cluster-name&gt;</code> (<code>local-dev</code> for <code>default</code>,
+   <code>local-dev-&lt;project&gt;</code> otherwise), then check for and remove any leftover network/volume named
+   <code>k3d-&lt;cluster-name&gt;*</code> (<code>docker network ls</code> / <code>podman network ls</code>, <code>docker volume ls</code> /
+   <code>podman volume ls</code>).</li>
+<li>Re-run <code>localctl setup</code> (<code>default</code>) or <code>localctl profiles switch &lt;name&gt;</code> (any other project), or
+   <code>./bin/bootstrap.sh</code> if the CLI isn't installed yet.</li>
+<li>If it still fails, confirm you're on a current version of <code>cli/src/lib/clusterProvision.js</code> —
+   this is exactly the bug the plain-container registry approach was built to avoid; a version that
+   passed a <code>registries.create</code> block to k3d would reintroduce it.</li>
+</ol>
+<h2 id="port-80-or-443-already-in-use">Port 80 or 443 already in use<a class="headerlink" href="#port-80-or-443-already-in-use" title="Permanent link">&para;</a></h2>
+<p>Something else on your machine is bound to those ports (another local cluster, a system web
+server, IIS on Windows, etc). For the <code>default</code> project, either stop whatever's holding the port,
+or change <code>DEFAULT_HTTP_PORT</code>/<code>DEFAULT_HTTPS_PORT</code> in <code>cli/src/lib/constants.js</code> (note every app's
+<code>https://&lt;subdomain&gt;.local.test</code> assumes the default 80/443 mapping, so a custom port means adding
+<code>:&lt;port&gt;</code> to every URL). For any other Main project, this is exactly what <code>exclusive: false</code>
+handles for you automatically at creation time (<code>localctl profiles new</code>) — its own <code>httpPort</code>/
+<code>httpsPort</code> live in that project's entry in <code>~/.localctl/profiles.json</code>, editable directly if you
+need to change them after the fact (re-run <code>localctl profiles switch &lt;name&gt;</code> after editing to
+apply).</p>
+<h2 id="registry-container-fails-to-start-address-already-in-use-on-port-5000">Registry container fails to start: <code>address already in use</code> on port 5000<a class="headerlink" href="#registry-container-fails-to-start-address-already-in-use-on-port-5000" title="Permanent link">&para;</a></h2>
+<p>On macOS this is almost always Control Center's AirPlay Receiver, which listens on port 5000 by
+default (<code>lsof -nP -iTCP:5000 -sTCP:LISTEN</code> will show a process named <code>ControlCe...</code>). That's
+exactly why the <code>default</code> project's registry host-side port is 5050, not 5000
+(<code>REGISTRY_HOST_PORT</code> in <code>cli/src/lib/constants.js</code>) — the container's own port, and the in-cluster
+DNS name/port containerd pulls from, stay 5000 either way. If something else is still squatting on
+5050 too, change <code>REGISTRY_HOST_PORT</code> there (or, for a non-default project, its <code>registryPort</code> in
+<code>~/.localctl/profiles.json</code>) — you don't need to touch any Tiltfile yourself, <code>localctl app
+registry-info</code> (which every Tiltfile calls) picks up the new port automatically.</p>
+<h2 id="tilt-builds-but-the-pod-shows-imagepullbackoff">Tilt builds but the pod shows <code>ImagePullBackOff</code><a class="headerlink" href="#tilt-builds-but-the-pod-shows-imagepullbackoff" title="Permanent link">&para;</a></h2>
+<p>Usually means the image never reached the project's local registry, or the cluster can't resolve
+it. Check:
+- <code>localctl app registry-info</code> (from the app's own repo) prints what Tilt is actually using -
+  confirm <code>pushHost</code>'s port matches a registry container that's actually running, and
+  <code>clusterHost</code>'s name matches what's actually on the cluster's network (next two checks).
+- The registry container is running: <code>docker ps</code> / <code>podman ps</code> should show <code>local-dev-registry</code>
+  (<code>default</code>) or <code>local-dev-&lt;project&gt;-registry</code> (any other Main project). If it's missing (e.g.
+  after a manual container prune), re-run <code>localctl setup</code>/<code>localctl profiles switch &lt;name&gt;</code> — it's
+  idempotent and will recreate just the registry.
+- It's on the cluster's network: <code>docker network inspect k3d-local-dev</code> (or <code>k3d-local-dev-&lt;project&gt;</code>)
+  should list the registry container among connected containers. If you created it manually, make
+  sure <code>--network k3d-&lt;cluster-name&gt;</code> was passed.</p>
+<h2 id="podman-build-fails-with-unable-to-upgrade-to-h2c-received-404">Podman: build fails with <code>unable to upgrade to h2c, received 404</code><a class="headerlink" href="#podman-build-fails-with-unable-to-upgrade-to-h2c-received-404" title="Permanent link">&para;</a></h2>
+<p>Tilt's <code>docker_build</code> defaults to BuildKit's gRPC-based build protocol, which Podman's
+Docker-API-compat socket doesn't implement. <code>localctl app up</code> sets <code>DOCKER_BUILDKIT=0</code> automatically
+whenever it detects Podman as the active engine (see <code>cli/src/lib/engine.js</code> and
+<code>cli/src/commands/up.js</code>) — you shouldn't need to do anything. If you're driving <code>tilt</code> directly
+(bypassing <code>localctl app up</code>, e.g. <code>tilt ci</code>), set it yourself: <code>DOCKER_BUILDKIT=0 tilt up</code>.</p>
+<h2 id="podman-push-fails-with-server-gave-http-response-to-https-client">Podman: push fails with <code>server gave HTTP response to HTTPS client</code><a class="headerlink" href="#podman-push-fails-with-server-gave-http-response-to-https-client" title="Permanent link">&para;</a></h2>
+<p>The local registry is deliberately plain HTTP (no TLS — it's local-only, reachable only from your
+machine and the cluster). Podman's client defaults to HTTPS and refuses to talk to it until it's
+told the registry is insecure — and because Podman's daemon runs inside a VM, that has to be
+configured <em>inside</em> that VM, not on the host. <code>localctl setup</code>/<code>localctl profiles new</code>/<code>switch</code> all
+do this via <code>podman machine ssh</code> before their cluster is even created (<code>cli/src/lib/podman.js</code>,
+writing <code>/etc/containers/registries.conf.d/999-local-dev.conf</code> inside the VM). Each project's
+registry port gets its own <code>[[registry]]</code> block <strong>appended</strong> to that one file, not overwritten - a
+second Main project on a different port doesn't undo the first one's trust entry. <code>localctl
+uninstall</code> removes the whole file (every project is being torn down anyway at that point). If you
+still hit this:
+- Confirm the port's block exists: <code>podman machine ssh &lt;machine-name&gt; "cat
+  /etc/containers/registries.conf.d/999-local-dev.conf"</code> (get <code>&lt;machine-name&gt;</code> from <code>podman
+  machine list</code>). It should list <code>localhost:&lt;port&gt;</code> and <code>127.0.0.1:&lt;port&gt;</code> as <code>insecure = true</code> for
+  every project's registry port you've ever provisioned on this machine - <code>5050</code> for <code>default</code>
+  unless you changed <code>REGISTRY_HOST_PORT</code> in <code>cli/src/lib/constants.js</code>, or whatever <code>registryPort</code>
+  a non-default project has in <code>~/.localctl/profiles.json</code>.
+- If a port's block is missing, re-run <code>localctl setup</code> (<code>default</code>) or <code>localctl profiles switch
+  &lt;name&gt;</code> (any other project) — idempotent, only restarts the VM if it actually needed to add
+  something.</p>
+<h2 id="forcing-an-immediate-rebuildredeploy">Forcing an immediate rebuild/redeploy<a class="headerlink" href="#forcing-an-immediate-rebuildredeploy" title="Permanent link">&para;</a></h2>
+<p>Tilt tracks <code>.local/config.json</code> as a Tiltfile input (via <code>read_json</code>) and auto-reloads on changes
+to it, same as any other watched file — you don't need to do anything, this is verified working.
+If you still want to force a rebuild/redeploy right now, without waiting on any file change (e.g.
+to bounce a hung process, or just to be sure):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>localctl app reload            # from inside the app's repo
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>localctl app reload -a &lt;name&gt;  # from anywhere
+</span></code></pre></div>
+<p>This only works for a detached (background) dev loop, i.e. plain <code>localctl app up</code> — not
+<code>-f</code>/<code>--foreground</code> mode, which has no separate process for <code>reload</code> to address. In foreground
+mode Ctrl+C and re-run <code>localctl app up -f</code> for a clean restart, or check Tilt's own terminal UI for
+its current manual-trigger shortcut.</p>
+<h2 id="localctl-app-status-shows-a-dev-loop-running-that-clearly-isnt"><code>localctl app status</code> shows a dev loop "running" that clearly isn't<a class="headerlink" href="#localctl-app-status-shows-a-dev-loop-running-that-clearly-isnt" title="Permanent link">&para;</a></h2>
+<p><code>localctl app up</code> tracks its background Tilt process by PID in <code>~/.localctl/run/&lt;app&gt;.pid</code>. After a
+machine reboot (or if the process was killed outside <code>localctl</code>), that PID can end up reused by an
+unrelated process, which <code>localctl app status</code> has no way to distinguish from the real thing. Fix:
+<code>localctl app down</code> (clears the stale PID file regardless of what's actually running under that PID),
+then <code>localctl app up</code> again.</p>
+<h2 id="localctl-app-up-fails-tilt-exits-immediately-with-address-already-in-use"><code>localctl app up</code> fails: Tilt exits immediately with <code>address already in use</code><a class="headerlink" href="#localctl-app-up-fails-tilt-exits-immediately-with-address-already-in-use" title="Permanent link">&para;</a></h2>
+<p><code>localctl app up</code> gives each app's Tilt instance its own random web UI port, precisely to avoid this -
+but if you ran <code>tilt</code> directly (bypassing <code>localctl app up</code>) or a previous <code>localctl app up -f</code>
+(<code>--foreground</code>) session didn't get cleanly killed (e.g. the terminal was force-closed rather than
+Ctrl+C'd), you can end up with an orphaned <code>tilt up</code> process still holding a port. Because that
+process isn't tracked in <code>~/.localctl/run/</code> (only detached-mode processes are), <code>localctl app status</code>
+won't show it and <code>localctl app down</code> won't stop it. Find and kill it by hand:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ps aux | grep "tilt up"
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kill &lt;pid&gt;
+</span></code></pre></div>
+<p>Then re-run <code>localctl app up</code>. As of this fix, a leftover process like this can no longer block a
+<em>different</em> app's deploy (each gets its own port) - but it's still a stray process worth cleaning
+up, and it'll keep blocking <code>localctl app up -f</code> for whichever app it belongs to.</p>
+<h2 id="starting-fresh">Starting fresh<a class="headerlink" href="#starting-fresh" title="Permanent link">&para;</a></h2>
+<p>For a quick cluster-only reset of the <code>default</code> project (keeps your CLI install, certs, hosts
+entries) - for any other project, substitute its own cluster name (<code>local-dev-&lt;name&gt;</code>) and re-run
+<code>localctl profiles switch &lt;name&gt;</code> instead of <code>setup</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>k3d cluster delete local-dev
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>localctl setup
+</span></code></pre></div>
+<p>For a full teardown (every project's cluster, registries, hosts entries, certs/state, everything
+<code>localctl setup</code>/<code>localctl profiles</code> set up), see <a href="../uninstalling/">Uninstalling</a> —
+<code>localctl uninstall</code>, or <code>./bin/uninstall.sh</code> / <code>uninstall.ps1</code> to also remove the CLI shim — then
+run setup again to start clean.</p>
+<p>Either way, app data (per-app <code>PersistentVolumeClaim</code>s for postgres/mongo) is destroyed with the
+cluster — this is a local dev environment, not somewhere to keep data you care about.</p>
+<h2 id="no-cluster-running-for-project-name"><code>No cluster running for project "&lt;name&gt;"</code><a class="headerlink" href="#no-cluster-running-for-project-name" title="Permanent link">&para;</a></h2>
+<p>Every app-scoped command (<code>app up</code>/<code>down</code>/<code>status</code>/<code>reload</code>) and every cluster-wide one
+(<code>addons ...</code>, <code>doctor</code>, <code>hosts ...</code>) checks that the project's cluster actually exists before
+doing anything else, rather than failing with a confusing raw <code>kubectl</code>/Tilt error further down.
+Which project a command means is directory-resolved (see <a href="../architecture/#multi-project-support">Architecture — Multi-project
+support</a>):</p>
+<ul>
+<li><code>Run "localctl setup" to start it.</code> — you're targeting the <code>default</code> project and never
+  bootstrapped it (or <code>k3d cluster delete local-dev</code>'d it away). This does not auto-run for you,
+  even as a side effect of an unrelated command - bringing up a cluster is slow and can prompt for
+  <code>sudo</code>, both surprising if you didn't ask for it.</li>
+<li><code>Run "localctl profiles switch &lt;name&gt;" to start it.</code> — a Main (own-cluster) or namespace-scoped
+  project you created with <code>localctl profiles new</code> isn't up. <code>switch</code> brings up whichever Main
+  project owns it (tearing down other Main projects first if this one is <code>exclusive</code> - see
+  <code>localctl profiles status</code>).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../uninstalling/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Uninstalling">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Uninstalling
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../releasing/" class="md-footer__link md-footer__link--next" aria-label="Next: Releasing">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Releasing
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; localctl
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/psilvmoreira/localctl" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.indexes", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
