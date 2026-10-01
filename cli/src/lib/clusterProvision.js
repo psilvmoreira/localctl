@@ -9,7 +9,12 @@ const { ensureInsecureRegistry } = require('./podman');
 const { DOMAIN } = require('./constants');
 const logger = require('./logger');
 
-const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
+// Cluster-level manifests: bundled under cli/assets/ in the npm package (copied there by
+// scripts/sync-assets.js at pack time), or read straight from the repo root in a git checkout.
+const BUNDLED_MANIFESTS_DIR = path.resolve(__dirname, '..', '..', 'assets', 'manifests');
+const MANIFESTS_DIR = fs.existsSync(BUNDLED_MANIFESTS_DIR)
+  ? BUNDLED_MANIFESTS_DIR
+  : path.resolve(__dirname, '..', '..', '..', 'cluster', 'manifests');
 
 function registryNameFor(clusterName) {
   return `${clusterName}-registry`;
@@ -128,8 +133,8 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
   }
   run('kubectl', ['wait', '--for=condition=Established', 'crd/tlsstores.traefik.io', '--timeout=60s'], { stdio: 'ignore' });
 
-  run('kubectl', ['apply', '-f', path.join(REPO_ROOT, 'cluster', 'manifests', 'tls-store.yaml')]);
-  run('kubectl', ['apply', '-f', path.join(REPO_ROOT, 'cluster', 'manifests', 'namespace-addons.yaml')]);
+  run('kubectl', ['apply', '-f', path.join(MANIFESTS_DIR, 'tls-store.yaml')]);
+  run('kubectl', ['apply', '-f', path.join(MANIFESTS_DIR, 'namespace-addons.yaml')]);
   logger.success('TLS configured, default cert wired into Traefik');
 }
 

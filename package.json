@@ -1,6 +1,13 @@
 {
-  "name": "localctl",
+  "name": "localctl-monorepo",
   "private": true,
-  "version": "0.1.0",
-  "description": "Local Kubernetes dev platform bootstrap + CLI"
+  "description": "Local Kubernetes dev platform bootstrap + CLI",
+  "scripts": {
+    "test": "npm --prefix cli test",
+    "test:pack": "npm --prefix cli run test:pack"
+  },
+  "devDependencies": {
+    "conventional-changelog-conventionalcommits": "^10.4.0",
+    "semantic-release": "^25.0.9"
+  }
 }
