@@ -40,8 +40,8 @@ localctl setup
 
 This does everything:
 
-1. Detects your container engine (Docker Desktop, Podman, or Rancher Desktop) and confirms it's
-   running.
+1. Detects your container engine and confirms it's running. Podman Desktop is tested; Docker
+   Desktop and Rancher Desktop are experimental and print a warning.
 2. Installs anything missing: `k3d`, `kubectl`, `tilt`, `mkcert` (via Homebrew on macOS, winget on
    Windows).
 3. Creates the `local-dev` k3d cluster, with ports 80/443 mapped to your machine, and starts a

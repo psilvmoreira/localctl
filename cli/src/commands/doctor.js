@@ -1,5 +1,5 @@
 const { commandExists, capture } = require('../lib/exec');
-const { detectEngine } = require('../lib/engine');
+const { detectEngine, warnIfExperimental } = require('../lib/engine');
 const { getActive, clusterNameFor } = require('../lib/profileStore');
 const ui = require('../lib/ui');
 const logger = require('../lib/logger');
@@ -23,6 +23,7 @@ module.exports = (program) => {
       logger.step('Checking environment...');
       const detected = detectEngine();
       check(`container engine available${detected ? ` (${detected.engine})` : ''}`, () => Boolean(detected));
+      if (detected) warnIfExperimental(detected.engine);
       if (detected && detected.engine === 'podman') {
         logger.info('Podman detected: "localctl app up" will disable BuildKit automatically for image builds.');
       }

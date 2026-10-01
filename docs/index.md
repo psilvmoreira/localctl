@@ -69,8 +69,8 @@ $ localctl app up
 
     ---
 
-    Works with Docker Desktop, Podman Desktop, or Rancher Desktop. Podman-specific quirks are
-    detected and handled automatically — you don't need to know they exist.
+    Tested with Podman Desktop; Docker Desktop and Rancher Desktop support is experimental.
+    Podman-specific quirks are detected and handled automatically — you don't need to know they exist.
 
 -   :material-database:{ .lg .middle } __Real Helm charts, zero JS__
 
@@ -114,7 +114,8 @@ $ localctl app up
 ## Requirements
 
 - **macOS** or **Windows** (PowerShell)
-- One running container engine: **Docker Desktop**, **Podman Desktop**, or **Rancher Desktop**
+- One running container engine: **Podman Desktop** (tested). **Docker Desktop** and **Rancher
+  Desktop** are experimental: detected and expected to work, but not yet fully tested.
 - **Git**, to clone this repo and your app repos
 - **Homebrew** (macOS) or **winget** (Windows) — used once to install missing tools
 

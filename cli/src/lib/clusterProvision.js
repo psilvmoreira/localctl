@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const { run, capture, sleepSync, commandExists } = require('./exec');
-const { detectEngine } = require('./engine');
+const { detectEngine, warnIfExperimental } = require('./engine');
 const { installIfMissing } = require('./toolInstall');
 const { ensureInsecureRegistry } = require('./podman');
 const { DOMAIN } = require('./constants');
@@ -40,6 +40,7 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
   }
   const { engine, bin: engineBin } = detected;
   logger.success(`Using container engine: ${engine} (${engineBin} CLI)`);
+  warnIfExperimental(engine);
 
   // Podman-specific, and must happen before the cluster/registry exist - see lib/podman.js. The
   // insecure-registry trust is VM-wide, so it only needs doing once no matter how many clusters

@@ -1,6 +1,8 @@
 const { Command } = require('commander');
 const { version } = require('../package.json');
 
+require('./lib/updateCheck').start(version);
+
 const program = new Command();
 program
   .name('localctl')

@@ -47,6 +47,13 @@
   "engines": {
     "node": ">=18"
   },
+  "localctl": {
+    "containerEngines": {
+      "podman": "tested",
+      "docker": "experimental",
+      "rancher-desktop": "experimental"
+    }
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
