@@ -340,7 +340,8 @@ The full documentation lives at **[psilvmoreira.github.io/localctl](https://psil
 
 ## Contributing
 
-Issues and pull requests are welcome.
+Issues and pull requests are welcome. The full guide (constraints, dependency policy, working on
+the docs site) is in [**Contributing**](https://psilvmoreira.github.io/localctl/contributing/).
 
 1. Fork the repository and create a branch.
 2. Make your change and run the tests:

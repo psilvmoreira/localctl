@@ -53,7 +53,9 @@ Every PR runs:
 
 - **pr-title** (`pr-title.yml`) - the title is a valid Conventional Commit. Re-runs when you
   edit the title. It also previews the release: a notice on the check (and the job summary)
-  says what merging the PR publishes, e.g. `Merging this PR releases v0.4.0`.
+  says what merging the PR publishes, e.g. `Merging this PR releases v0.4.0`. The preview counts
+  every commit on `master` since the last tag, not only the PR title, because semantic-release
+  does the same: a `docs:` PR merged after an unreleased `feat:` publishes that `feat:`.
 - **test** (`ci.yml`) on Linux/macOS/Windows × Node 18/22:
     - `npm test` - every command module loads, `--version` matches `package.json`.
     - `npm run test:pack` - builds the real tarball, installs it into a throwaway prefix, runs the
@@ -66,7 +68,8 @@ Every PR runs:
 
 All third-party actions are pinned to a commit SHA. Dependabot (`.github/dependabot.yml`) opens
 weekly PRs for actions and npm dependencies: CLI runtime dependencies use a `fix(deps):` title
-and release a patch, everything else uses `chore:` or `ci:` and releases nothing.
+and release a patch, everything else uses `chore:` or `ci:` and releases nothing. Majors that
+would break the CLI are ignored; see [Contributing: dependencies](contributing.md#dependencies).
 
 To re-run a release by hand (for example after fixing a failed one), open Actions > release >
 Run workflow on `master`.
@@ -84,6 +87,17 @@ npm deprecate @localctl/cli@X.Y.Z "Broken: <reason>. Use X.Y.Z+1."
 
 Then merge a `fix:` PR, which releases `X.Y.Z+1`. If the fix will take a while, point `latest`
 back at the last good version: `npm dist-tag add @localctl/cli@<good-version> latest`.
+
+**The release job fails with an npm authentication error** (`ENEEDAUTH`, 401 or 403): publishing
+uses trusted publishing only, with no token to fall back on. On npmjs.com, check the package's
+Trusted Publisher: repository `psilvmoreira/localctl`, workflow `release.yml`, environment `npm`.
+All three must match exactly, and the run must come from `master` or `beta` (the `npm`
+environment only allows those branches).
+
+**A version was released with no code changes:** a `feat:` or `fix:` commit with no changes
+(usually a branch merged twice) is skipped by the release workflow's path filters, then released
+by the next merge that does trigger it. The `not-empty` check now blocks such PRs. The extra
+version is harmless: leave it, there is nothing to fix forward.
 
 **The release job failed after creating the tag but before publishing:** fix the cause, delete
 the tag (`git push origin :refs/tags/vX.Y.Z`), and re-run the failed workflow.
@@ -115,9 +129,15 @@ Inspect the exact contents any time: `cd cli && npm pack --dry-run`.
    2FA) and add it as the `NPM_TOKEN` Actions secret.
 4. **GitHub**:
     - Settings > General > Pull Requests: allow **squash merging** only, with the default commit
-      message set to **Pull request title**.
+      message set to **Pull request title**, and turn on **Automatically delete head branches**.
+    - Settings > Branches: protect `master`. Require a pull request, and require the status
+      checks `pr-title`, `not-empty`, `docs` and the six `test (<os>, node <version>)` jobs,
+      with branches up to date before merging.
     - Settings > Environments: create `npm`, limited to the `master` and `beta` branches.
+    - Settings > Pages: source **Deploy from a branch**, branch `gh-pages`, folder `/ (root)`.
+      Without this the docs workflow succeeds but the site returns 404.
 5. **Switch to trusted publishing** after the first release: on npmjs.com, open the package and go
    to Settings > Trusted Publisher > GitHub Actions. Use repository `psilvmoreira/localctl`,
    workflow `release.yml` and environment `npm`. Then delete the `NPM_TOKEN` secret, revoke the
    token, and set Publishing access to *Require two-factor authentication and disallow tokens*.
+   `release.yml` no longer reads `NPM_TOKEN`: this step is done for `@localctl/cli`.
