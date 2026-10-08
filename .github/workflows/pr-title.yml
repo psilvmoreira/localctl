@@ -8,12 +8,54 @@ on:
     types: [opened, edited, synchronize, reopened]
 
 permissions:
+  contents: read
   pull-requests: read
 
 jobs:
   pr-title:
     runs-on: ubuntu-latest
     steps:
-      - uses: amannn/action-semantic-pull-request@v5
+      - uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      # Preview of what merging this PR releases, shown as a notice on the check and in the job
+      # summary. Mirrors the conventionalcommits preset's default rules used by .releaserc.json.
+      - name: Preview release
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          type=$(printf '%s' "$TITLE" | sed -nE 's/^([a-z]+)(\([^)]*\))?(!?):.*/\1/p')
+          bang=$(printf '%s' "$TITLE" | sed -nE 's/^[a-z]+(\([^)]*\))?(!?):.*/\2/p')
+          case "$bang:$type" in
+            !:*)              bump=major ;;
+            :feat)            bump=minor ;;
+            :fix|:perf|:revert) bump=patch ;;
+            *)                bump=none ;;
+          esac
+
+          last=$(git tag --merged "origin/$BASE_REF" --sort=-v:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          last=${last:-v0.0.0}
+          IFS=. read -r major minor patch <<< "${last#v}"
+          case $bump in
+            major) next="$((major + 1)).0.0" ;;
+            minor) next="$major.$((minor + 1)).0" ;;
+            patch) next="$major.$minor.$((patch + 1))" ;;
+          esac
+
+          if [ "$bump" = none ]; then
+            msg="Merging this PR releases nothing (current: $last)."
+          elif [ "$BASE_REF" = master ]; then
+            msg="Merging this PR releases v$next ($bump bump from $last)."
+          else
+            msg="Merging this PR releases a $bump pre-release on $BASE_REF."
+          fi
+          echo "::notice title=Release preview::$msg"
+          echo "### Release preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "$msg" >> "$GITHUB_STEP_SUMMARY"

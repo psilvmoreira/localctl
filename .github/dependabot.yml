@@ -1,0 +1,36 @@
+# Commit prefixes decide what a merged Dependabot PR releases (PR titles become the squash
+# commit): runtime deps of the CLI ship to users, so they release a patch; the rest don't.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /cli
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: fix
+      prefix-development: chore
+      include: scope
+    groups:
+      cli-dependencies:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      release-tooling:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]

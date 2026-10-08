@@ -52,11 +52,24 @@ Push or merge to a `beta` branch. Versions look like `0.3.0-beta.1` and are publ
 Every PR runs:
 
 - **pr-title** (`pr-title.yml`) - the title is a valid Conventional Commit. Re-runs when you
-  edit the title.
+  edit the title. It also previews the release: a notice on the check (and the job summary)
+  says what merging the PR publishes, e.g. `Merging this PR releases v0.4.0`.
 - **test** (`ci.yml`) on Linux/macOS/Windows × Node 18/22:
     - `npm test` - every command module loads, `--version` matches `package.json`.
     - `npm run test:pack` - builds the real tarball, installs it into a throwaway prefix, runs the
       installed binary. Catches files missing from the package before users do.
+- **not-empty** (`ci.yml`) - the PR changes at least one file. A PR with no changes (usually a
+  branch that was already merged) would squash into an empty commit, which the release workflow's
+  path filters skip, so a `feat:` title would release nothing.
+- **docs** (`ci.yml`) - `mkdocs build --strict`, so broken links fail the PR instead of the
+  deploy after merge.
+
+All third-party actions are pinned to a commit SHA. Dependabot (`.github/dependabot.yml`) opens
+weekly PRs for actions and npm dependencies: CLI runtime dependencies use a `fix(deps):` title
+and release a patch, everything else uses `chore:` or `ci:` and releases nothing.
+
+To re-run a release by hand (for example after fixing a failed one), open Actions > release >
+Run workflow on `master`.
 
 `release.yml` re-runs the tests on `master` before releasing.
 
