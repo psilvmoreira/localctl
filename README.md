@@ -318,6 +318,7 @@ The full documentation lives at **[psilvmoreira.github.io/localctl](https://psil
 |---|---|
 | [Getting started](https://psilvmoreira.github.io/localctl/getting-started/) | Install and first deploy, step by step |
 | [Architecture](https://psilvmoreira.github.io/localctl/architecture/) | Every component, why it was chosen, multi-project support |
+| [CLI commands](https://psilvmoreira.github.io/localctl/cli-reference/) | Every command and option |
 | [Config schema](https://psilvmoreira.github.io/localctl/config-schema/) | Every `.local/config.json` field |
 | [Debugging](https://psilvmoreira.github.io/localctl/debugging/) | Attach a debugger in Node, Python, Go, Java and .NET |
 | [Adding tools](https://psilvmoreira.github.io/localctl/adding-tools/) | Write your own per-app or cluster-wide addon |

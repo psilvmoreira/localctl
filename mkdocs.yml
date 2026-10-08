@@ -1,5 +1,6 @@
 site_name: localctl
-site_description: A local Kubernetes dev platform for macOS and Windows - one CLI, one cluster, one subdomain per app.
+site_description: Local Kubernetes for app developers. One CLI, one cluster, a real HTTPS subdomain per app.
+site_author: Pedro Moreira
 site_url: https://psilvmoreira.github.io/localctl/
 repo_name: psilvmoreira/localctl
 repo_url: https://github.com/psilvmoreira/localctl
@@ -9,41 +10,55 @@ docs_dir: docs
 
 theme:
   name: material
+  custom_dir: overrides
   icon:
     logo: material/kubernetes
     repo: fontawesome/brands/github
+    edit: material/pencil
   favicon: assets/favicon.svg
+  # Three-way toggle: follow the OS, then force light, then force dark.
   palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/weather-night
+        icon: material/weather-sunny
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
+        icon: material/weather-night
+        name: Switch to system preference
   font:
     text: Inter
     code: JetBrains Mono
   features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
-    - navigation.top
+    - navigation.path
     - navigation.indexes
+    - navigation.top
     - navigation.footer
     - toc.follow
     - search.suggest
     - search.highlight
+    - search.share
     - content.code.copy
+    - content.code.select
     - content.code.annotate
     - content.tabs.link
+    - content.tooltips
     - content.action.edit
 
 extra_css:
@@ -51,16 +66,21 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Architecture: architecture.md
-  - Config Schema: config-schema.md
-  - Adding Tools: adding-tools.md
-  - Debugging: debugging.md
-  - Uninstalling: uninstalling.md
-  - Troubleshooting: troubleshooting.md
-  - Releasing: releasing.md
+  - Get started: getting-started.md
+  - Guides:
+      - Debugging: debugging.md
+      - Adding tools: adding-tools.md
+      - Troubleshooting: troubleshooting.md
+      - Uninstalling: uninstalling.md
+  - Reference:
+      - CLI commands: cli-reference.md
+      - Config schema: config-schema.md
+      - Architecture: architecture.md
+  - Project:
+      - Releasing: releasing.md
 
 markdown_extensions:
+  - abbr
   - admonition
   - attr_list
   - md_in_html
@@ -81,6 +101,7 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
+  - pymdownx.keys
   - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
@@ -91,8 +112,13 @@ markdown_extensions:
       custom_checkbox: true
 
 extra:
+  generator: false
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/psilvmoreira/localctl
+      name: localctl on GitHub
+    - icon: fontawesome/brands/npm
+      link: https://www.npmjs.com/package/@localctl/cli
+      name: "@localctl/cli on npm"
 
-copyright: Copyright &copy; localctl
+copyright: Copyright &copy; 2026 Pedro Moreira &middot; <a href="https://github.com/psilvmoreira/localctl/blob/master/LICENSE">MIT License</a>
