@@ -86,5 +86,3 @@ jobs:
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Fallback until trusted publishing is configured on npmjs.com - delete the secret after.
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
