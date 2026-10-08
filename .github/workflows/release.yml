@@ -12,6 +12,7 @@ on:
     branches: [master, beta]
     paths-ignore:
       - "docs/**"
+      - "overrides/**"
       - "mkdocs.yml"
       - ".github/workflows/docs.yml"
   # Manual re-run, e.g. after fixing a release that failed. Only master and beta can release;

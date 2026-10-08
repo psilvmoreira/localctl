@@ -1,0 +1,42 @@
+{#- Landing page: a hero above the regular page content. Used by docs/index.md via
+    `template: home.html`. Everything else on the site uses Material's stock templates. -#}
+{% extends "main.html" %}
+
+{% block tabs %}
+  {{ super() }}
+  <section class="lc-hero">
+    <div class="md-grid md-typeset lc-hero__inner">
+      <div class="lc-hero__text">
+        <p class="lc-hero__eyebrow">Local Kubernetes for app developers</p>
+        <h1 class="lc-hero__title">One CLI. One cluster.<br>A real HTTPS subdomain per app.</h1>
+        <p class="lc-hero__lead">
+          Describe your app in one JSON file. <code>localctl</code> builds it, deploys it to a local
+          k3d cluster, gives it a trusted <code>https://&lt;app&gt;.local.test</code> address and
+          live-syncs your code on every save. No YAML, no port juggling, no certificate warnings.
+        </p>
+        <div class="lc-hero__actions">
+          <a href="{{ 'getting-started/' | url }}" class="md-button md-button--primary">Get started</a>
+          <a href="{{ 'cli-reference/' | url }}" class="md-button">CLI reference</a>
+          <a href="{{ config.repo_url }}" class="md-button lc-hero__ghost">GitHub</a>
+        </div>
+      </div>
+      <div class="lc-terminal" aria-label="Example terminal session">
+        <div class="lc-terminal__bar" aria-hidden="true"><span></span><span></span><span></span></div>
+        <pre class="lc-terminal__body"><code><span class="lc-p">$</span> npm install -g @localctl/cli
+<span class="lc-p">$</span> localctl setup
+<span class="lc-p">$</span> cd orders-api &amp;&amp; localctl app new
+<span class="lc-p">$</span> localctl app up
+<span class="lc-dim">&gt; Waiting for the deployment to become ready...</span>
+
+<span class="lc-ok">ok</span> orders-api -&gt; <span class="lc-url">https://orders.local.test</span>
+<span class="lc-dim">  debug:  localhost:9229
+  logs:   localctl app logs orders-api -f</span></code></pre>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{#- No automatic page title or edit button on the landing page: the hero is the title. -#}
+{% block content %}
+  {{ page.content }}
+{% endblock %}

@@ -1,36 +1,58 @@
-# Getting Started
+---
+hide:
+  - navigation
+description: Install localctl, deploy your first app, and set up more than one project.
+---
+
+# Getting started
+
+!!! info "Before you start"
+    You need **macOS** or **Windows**, **Node.js 18+**, a running container engine
+    ([Podman Desktop](https://podman-desktop.io/) is tested; Docker Desktop and Rancher Desktop are
+    experimental), and **Homebrew** (macOS) or **winget** (Windows). Everything else is installed
+    for you.
 
 ## 1. One-time machine setup
 
-Clone this repo somewhere permanent — it stays on your machine as the control plane for every
-app you run locally, separate from your app repos.
+Install the CLI from npm:
 
-```
-git clone <this-repo> ~/dev/localctl
-cd ~/dev/localctl
-```
+=== "npm"
 
-Install `localctl` as a standard global npm package:
+    ```sh
+    npm install -g @localctl/cli
+    ```
 
-```
-cd cli
-npm install
-npm install -g .
-```
+=== "Pre-release"
 
-If that fails with `EACCES`, npm's global install directory isn't writable by your user — fix it
-once, for every future global npm install, not just this one:
+    ```sh
+    npm install -g @localctl/cli@beta
+    ```
 
-```
-mkdir ~/.npm-global
-npm config set prefix ~/.npm-global
-echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc   # or ~/.bash_profile
-source ~/.zshrc
-```
+=== "From source"
 
-Then re-run `npm install -g .` from `cli/`. This is [npm's own documented
-fix](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally),
-not a workaround specific to this repo.
+    To work on `localctl` itself:
+
+    ```sh
+    git clone https://github.com/psilvmoreira/localctl.git
+    cd localctl/cli
+    npm install
+    npm install -g .
+    ```
+
+??? tip "Getting `EACCES` on `npm install -g`?"
+    npm's global install directory isn't writable by your user. Fix it once, for every future
+    global npm install:
+
+    ```sh
+    mkdir ~/.npm-global
+    npm config set prefix ~/.npm-global
+    echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc   # or ~/.bash_profile
+    source ~/.zshrc
+    ```
+
+    Then run the install again. This is
+    [npm's own documented fix](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally),
+    not a workaround specific to `localctl`.
 
 Now run the actual setup:
 
@@ -60,11 +82,11 @@ Use `localctl doctor` for a quick health check without re-running the full setup
 only ever manages the `default` project - see [More than one project](#5-more-than-one-project)
 below for anything else.
 
-**Alternative, if you'd rather not touch npm's global config:** `./bin/bootstrap.sh` (macOS) /
-`bootstrap.ps1` (Windows) install `localctl` as a self-contained PATH shim in `~/.localctl/bin`
-instead of a real npm package, and then run `localctl setup` for you automatically. No
-`npm install -g`, no possible `EACCES`. Uninstall that version with `bin/uninstall.sh` /
-`uninstall.ps1` instead of `npm uninstall -g` later.
+??? note "Prefer not to touch npm's global config?"
+    From a clone of the repository, `./bin/bootstrap.sh` (macOS) or `./bin/bootstrap.ps1`
+    (Windows) installs `localctl` as a self-contained shim in `~/.localctl/bin` and runs
+    `localctl setup` for you. No `npm install -g`, so no `EACCES`. Remove that install with
+    `./bin/uninstall.sh` or `./bin/uninstall.ps1` instead of `npm uninstall -g`.
 
 ## 2. Add an app
 
@@ -177,25 +199,9 @@ localctl profiles switch staging   # make it active; brings its cluster up if ne
 `localctl doctor`/`hosts`/`addons` (nothing tied to one app's directory) always act on whichever
 project is currently active — switch to the one you mean first.
 
-## Everyday commands
+## Next steps
 
-| Command | Purpose |
-|---|---|
-| `localctl setup` | (Re)install/repair the `default` project's infra - safe to re-run any time |
-| `localctl uninstall` | Remove everything `setup`/`profiles` set up, every project (see [Uninstalling](./uninstalling.md)) |
-| `localctl doctor` | Check the active project's environment health |
-| `localctl app new` | Scaffold `.local/config.json` + Tiltfile in the current repo |
-| `localctl app up [-f]` | Build, deploy, live-reload. Detached (background) by default; `-f`/`--foreground` for the interactive Tilt UI |
-| `localctl app down` | Stop the background dev loop (if any) and tear down the current app |
-| `localctl app reload [-a <name>]` | Force an immediate rebuild/redeploy, without waiting on a file change |
-| `localctl app status [-a <name>] [-A]` | App detail inside its repo or with `-a <name>`; a table of every app otherwise (or always with `-A`) |
-| `localctl app logs [name] [-f]` | Tail logs for an app - resolves automatically from inside its repo |
-| `localctl app exec [cmd...]` | Shell into the running app's pod (defaults to `sh`) |
-| `localctl app prune [-y]` | Permanently delete an already-torn-down app's leftover data (PVCs, secrets) |
-| `localctl app secrets set/unset/list/show` | Manage the app's own secrets (API keys, tokens) |
-| `localctl hosts sync` / `localctl hosts list` | Manage `*.local.test` hosts entries |
-| `localctl addons list` / `enable` / `disable` | Manage cluster-wide addons (e.g. `logging`, `monitoring`) in the active project |
-| `localctl addons status` | Every addon instance in the active project's cluster, shown separately from your apps |
-| `localctl profiles new <name>` | Create a project - its own cluster, or namespace-scoped under an existing one |
-| `localctl profiles list` / `status` | List every project, or show the currently active one |
-| `localctl profiles switch <name>` | Make a project active - brings its cluster up if needed |
+- [CLI commands](cli-reference.md): every command and option.
+- [Config schema](config-schema.md): every `.local/config.json` field.
+- [Debugging](debugging.md): attach a debugger in Node, Python, Go, Java or .NET.
+- [Troubleshooting](troubleshooting.md): known issues, with cause and fix.
