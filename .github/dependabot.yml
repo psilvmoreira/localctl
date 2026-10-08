@@ -13,6 +13,13 @@ updates:
     groups:
       cli-dependencies:
         update-types: [minor, patch]
+    # chalk 5+ is ESM-only (the CLI is CommonJS) and commander 14+ needs Node 20+ (the CLI
+    # supports Node 18). Both are breaking for users: upgrade by hand in a feat!: change.
+    ignore:
+      - dependency-name: chalk
+        versions: [">=5"]
+      - dependency-name: commander
+        versions: [">=14"]
 
   - package-ecosystem: npm
     directory: /
@@ -24,6 +31,10 @@ updates:
     groups:
       release-tooling:
         update-types: [minor, patch]
+    # Pinned to v9 in #3: v10 broke release notes generation. Re-test by hand before moving.
+    ignore:
+      - dependency-name: conventional-changelog-conventionalcommits
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
