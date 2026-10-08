@@ -168,6 +168,7 @@ All of `localctl`'s local state lives under `~/.localctl` (`%USERPROFILE%\.local
 ├── apps.json       registered app subdomains, used by `localctl hosts sync`
 ├── profiles.json   every project this machine knows about, and which one is active - see
 │                   "Multi-project support" below
+├── update-check.json  when npm was last checked for a newer @localctl/cli, and its dist-tags
 └── run/            <app>.pid + <app>.log per background dev loop started by `localctl app up`
 ```
 
@@ -175,6 +176,16 @@ All of `localctl`'s local state lives under `~/.localctl` (`%USERPROFILE%\.local
 and removes `certs/`, `apps.json`, `profiles.json`, and `run/`; `bin/uninstall.sh`/`uninstall.ps1`
 remove the whole directory, including `bin/`, once the CLI process itself has exited (see
 [Uninstalling](./uninstalling.md) for why that split exists).
+
+### Update notifications
+
+Every command prints "Update available" when `update-check.json` holds a newer version than the
+running one: `latest`, or for a pre-release user also the newest version on their own channel
+(e.g. `beta`). The notice comes from the cached file only, so it adds no network wait. When the
+cache is older than 24 hours, the command starts `updateCheckWorker.js` as a detached
+background process that fetches the dist-tags from the npm registry and rewrites the cache,
+possibly after the command has exited. The check is off in CI, when stderr is not a terminal,
+for a source checkout (`0.0.0-development`), and with `LOCALCTL_NO_UPDATE_CHECK=1`.
 
 ## Podman-specific handling
 

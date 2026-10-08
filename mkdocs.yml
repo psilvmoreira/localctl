@@ -77,6 +77,7 @@ nav:
       - Config schema: config-schema.md
       - Architecture: architecture.md
   - Project:
+      - Contributing: contributing.md
       - Releasing: releasing.md
 
 markdown_extensions:
