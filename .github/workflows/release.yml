@@ -14,6 +14,9 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - ".github/workflows/docs.yml"
+  # Manual re-run, e.g. after fixing a release that failed. Only master and beta can release;
+  # dispatching from any other branch makes semantic-release exit without publishing.
+  workflow_dispatch: {}
 
 # Never run two releases at once; never cancel one halfway.
 concurrency:
@@ -30,9 +33,9 @@ jobs:
       run:
         working-directory: cli
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -54,11 +57,11 @@ jobs:
       pull-requests: write   # ...and on the merged PRs
       id-token: write        # npm trusted publishing (OIDC) + provenance
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0     # semantic-release needs every tag and commit
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -66,8 +69,8 @@ jobs:
             package-lock.json
             cli/package-lock.json
 
-      # Trusted publishing needs npm >= 11.5.1.
-      - run: npm install -g npm@latest
+      # Trusted publishing needs npm >= 11.5.1. Pinned so a new npm major can't break a release.
+      - run: npm install -g npm@11.21.0
 
       - name: Install semantic-release
         run: npm ci
