@@ -99,8 +99,12 @@ it's still untrusted:
 
 ## `<subdomain>.local.test` doesn't resolve
 
-Run `localctl hosts sync`. If it reports a permissions error, it prints the exact `sudo`/elevated
-command to run — copy-paste it. Then confirm with `localctl hosts list` and:
+The app can be up and healthy (`localctl app status` shows `1/1`) while its address doesn't
+resolve: the hosts file entry is missing. That happens when the `sudo` password or the Windows UAC
+prompt was declined or missed during `localctl setup` or `localctl app up`.
+
+Run `localctl hosts sync` and approve the prompt. If it still can't write the file, it prints the
+exact `sudo`/elevated command to run: copy-paste it. Then confirm with `localctl hosts list` and:
 
 ```
 # macOS/Linux

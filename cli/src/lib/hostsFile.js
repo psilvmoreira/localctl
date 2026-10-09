@@ -24,6 +24,20 @@ function listApps() {
   return Object.keys(registry);
 }
 
+// The Windows counterpart of `sudo cp`: copies src over the hosts file from an elevated
+// PowerShell, which raises a UAC prompt. Returns false if the prompt is declined or the copy
+// fails. The inner command goes through -EncodedCommand so paths need no nested quoting.
+function copyElevatedWindows(src) {
+  const quote = (s) => `'${s.replace(/'/g, "''")}'`;
+  const inner = `Copy-Item -LiteralPath ${quote(src)} -Destination ${quote(HOSTS_PATH)} -Force`;
+  const encoded = Buffer.from(inner, 'utf16le').toString('base64');
+  const res = spawnSync('powershell', [
+    '-NoProfile', '-NonInteractive', '-Command',
+    `Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-NonInteractive','-EncodedCommand','${encoded}'`,
+  ], { stdio: 'ignore' });
+  return res.status === 0;
+}
+
 function writeHosts(next, current) {
   if (next === current) {
     logger.info('Hosts file already up to date.');
@@ -38,8 +52,13 @@ function writeHosts(next, current) {
     const tmp = path.join(os.tmpdir(), 'localctl-hosts-new');
     fs.writeFileSync(tmp, next);
     if (process.platform === 'win32') {
-      logger.warn('Need Administrator rights to update the hosts file. Run in an elevated PowerShell:');
-      console.log(`  Copy-Item "${tmp}" "${HOSTS_PATH}" -Force`);
+      logger.warn('Need Administrator rights to update the hosts file. Approve the Windows prompt to continue.');
+      if (copyElevatedWindows(tmp) && fs.readFileSync(HOSTS_PATH, 'utf8') === next) {
+        logger.success(`Updated ${HOSTS_PATH}`);
+      } else {
+        logger.warn('Hosts file not updated, so *.local.test addresses won\'t resolve. Run in an elevated PowerShell:');
+        console.log(`  Copy-Item "${tmp}" "${HOSTS_PATH}" -Force`);
+      }
     } else {
       logger.warn('Need sudo to update the hosts file.');
       const res = spawnSync('sudo', ['cp', tmp, HOSTS_PATH], { stdio: 'inherit' });
