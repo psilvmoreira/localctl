@@ -2,6 +2,9 @@ const { Command } = require('commander');
 const { version } = require('../package.json');
 
 require('./lib/updateCheck').start(version);
+// Tools localctl downloaded itself (e.g. tilt on Windows) work even in a terminal opened before
+// they were added to the user's PATH.
+require('./lib/toolInstall').addToolsDirToPath();
 
 const program = new Command();
 program

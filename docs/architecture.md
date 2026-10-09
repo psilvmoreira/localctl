@@ -169,6 +169,7 @@ All of `localctl`'s local state lives under `~/.localctl` (`%USERPROFILE%\.local
 ├── profiles.json   every project this machine knows about, and which one is active - see
 │                   "Multi-project support" below
 ├── update-check.json  when npm was last checked for a newer @localctl/cli, and its dist-tags
+├── tools/          tilt.exe on Windows, where winget has no Tilt package (on the user PATH)
 └── run/            <app>.pid + <app>.log per background dev loop started by `localctl app up`
 ```
 

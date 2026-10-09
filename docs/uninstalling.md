@@ -43,13 +43,15 @@ rather than erroring.
 
 ## What it deliberately leaves alone
 
-- **k3d, kubectl, tilt, mkcert, node themselves.** These are general-purpose dev tools `localctl
-  setup` installed via Homebrew/winget; other projects on your machine may depend on them. Remove
-  them yourself if you're sure nothing else needs them:
+- **k3d, kubectl, tilt, mkcert, helm, node themselves.** These are general-purpose dev tools
+  `localctl setup` installed via Homebrew/winget; other projects on your machine may depend on
+  them. Remove them yourself if you're sure nothing else needs them:
   ```
-  brew uninstall k3d kubectl tilt mkcert node          # macOS
-  winget uninstall k3d-io.k3d Kubernetes.kubectl Tilt.dev.tilt FiloSottile.mkcert OpenJS.NodeJS.LTS  # Windows
+  brew uninstall k3d kubectl tilt mkcert helm node     # macOS
+  winget uninstall k3d.k3d Kubernetes.kubectl FiloSottile.mkcert Helm.Helm OpenJS.NodeJS.LTS  # Windows
   ```
+  Tilt isn't on winget: on Windows `localctl setup` downloads it from its GitHub release into
+  `~.localctl	ools` and adds that folder to your user PATH. Delete the folder to remove it.
 - **mkcert's root CA trust.** `mkcert` uses a single CA for every certificate it issues on your
   machine, not one per project. Uninstalling it (`mkcert -uninstall`) would also untrust any other
   local-dev certs you've generated with mkcert elsewhere. The script tells you the command at the
