@@ -73,9 +73,9 @@ This does everything:
    and why the ports differ).
 4. Generates a locally-trusted wildcard certificate for `*.local.test` via `mkcert` and wires it
    into Traefik as the cluster's default certificate.
-5. Syncs your hosts file so `*.local.test` resolves. This is the step most likely to prompt you for
-   a password (macOS `sudo`) or fail with a message telling you to run a command yourself in an
-   elevated shell (Windows, if not run as Administrator) — that's expected, not a bug.
+5. Syncs your hosts file so `*.local.test` resolves. Writing it needs admin rights: macOS asks for
+   your `sudo` password, Windows shows a UAC prompt. If you decline, it prints the command to run
+   yourself, and `*.local.test` addresses won't open in the browser until you do.
 
 `localctl setup` is a normal command — run it directly any time you want to (re)check or
 repair the infra (new machine state, cluster deleted by hand, etc). Every step is idempotent.
