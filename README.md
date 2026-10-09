@@ -75,17 +75,19 @@ JSON file per app.
 |---|---|
 | **macOS** or **Windows** | Windows commands run in PowerShell. |
 | **Node.js 18+** | Needed to install the CLI from npm. |
-| **Container engine** | [Podman Desktop](https://podman-desktop.io/), running. See [supported container engines](#supported-container-engines). |
+| **Container engine** | [Podman Desktop](https://podman-desktop.io/) (or Docker Desktop / Rancher Desktop), running. See [supported container engines](#supported-container-engines). |
 | **Homebrew** or **winget** | Used once by `localctl setup` to install missing tools. |
 
 `localctl setup` installs `k3d`, `kubectl`, `tilt`, `mkcert` and `helm` for you if they're missing.
+On Windows, Tilt isn't on winget, so it's downloaded from its GitHub release into
+`~.localctl	ools` and added to your user PATH.
 
 ### Supported container engines
 
 | Engine | Status |
 |---|---|
 | [Podman Desktop](https://podman-desktop.io/) | ✅ Tested |
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | 🧪 Experimental — not yet tested |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | 🧪 Experimental — setup and app deploy verified on Windows |
 | [Rancher Desktop](https://rancherdesktop.io/) | 🧪 Experimental — not yet tested |
 
 Experimental engines are detected and should work, since k3d only needs a Docker-compatible API,
@@ -106,7 +108,9 @@ the local image registry, trusts the `*.local.test` certificate, and updates you
 is idempotent: run it again any time to repair your environment.
 
 You'll see up to two one-time prompts during setup: **mkcert** asking to trust its local
-certificate authority, and **sudo/Administrator** to write the `*.local.test` hosts entries.
+certificate authority, and **admin rights** to write the `*.local.test` hosts entries (your
+`sudo` password on macOS, a UAC prompt on Windows). Approve both: without the hosts entries, apps
+run but their addresses don't resolve.
 
 **Pre-releases** are published under the `beta` tag: `npm install -g @localctl/cli@beta`.
 
@@ -120,7 +124,8 @@ Update available: 0.2.0 -> 0.3.0
 Run npm install -g @localctl/cli to update.
 ```
 
-Update with `npm install -g @localctl/cli`. The check never slows a command down, is skipped in
+Update with `npm install -g @localctl/cli`. On a pre-release you're also told about newer
+versions on your own channel (e.g. `beta`). The check never slows a command down, is skipped in
 CI, and can be turned off with `LOCALCTL_NO_UPDATE_CHECK=1`.
 
 <details>
@@ -204,6 +209,16 @@ localctl app down
 
 This removes only that app. The shared cluster keeps running for everything else.
 
+<details>
+<summary><b>App is ready but <code>https://&lt;app&gt;.local.test</code> doesn't open?</b></summary>
+
+If `localctl app status` shows `1/1` but the browser can't reach the address, the hosts file
+entry is missing: the `sudo` or UAC prompt was declined or missed. Run `localctl hosts sync` and
+approve the prompt. More cases, with cause and fix:
+[**Troubleshooting**](https://psilvmoreira.github.io/localctl/troubleshooting/).
+
+</details>
+
 > **Tip:** no app of your own yet? Clone the repo and try a ready-made example:
 > [`node-app`](https://github.com/psilvmoreira/localctl/tree/master/examples/node-app) (Node.js + Postgres),
 > [`python-app`](https://github.com/psilvmoreira/localctl/tree/master/examples/python-app) (Python + Redis), or
@@ -211,7 +226,8 @@ This removes only that app. The shared cluster keeps running for everything else
 
 ## Commands
 
-Run `localctl <command> --help` for every option.
+Run `localctl <command> --help` for every option, or see the full
+[**CLI reference**](https://psilvmoreira.github.io/localctl/cli-reference/).
 
 <details open>
 <summary><b>Machine setup</b></summary>
@@ -220,7 +236,7 @@ Run `localctl <command> --help` for every option.
 |---|---|
 | `localctl setup` | Install or repair the infrastructure: container engine, cluster, TLS, hosts. Idempotent. |
 | `localctl doctor` | Health check of the active project's environment. |
-| `localctl hosts sync` / `list` | Manage the `*.local.test` entries in your hosts file. |
+| `localctl hosts sync` / `list` | Write or list the `*.local.test` entries in your hosts file. Asks for admin rights when needed. |
 | `localctl uninstall [-y]` | Remove every cluster, registry, hosts entry, certificate and state file `localctl` created. |
 
 </details>
@@ -235,7 +251,7 @@ Run `localctl <command> --help` for every option.
 | `localctl app down` | Stop the dev loop and remove the app. Keeps its data. |
 | `localctl app reload [-a <name>]` | Force a rebuild and redeploy without waiting for a file change. |
 | `localctl app status [-a <name>] [-A]` | One app's detail inside its repository, or a table of every app. |
-| `localctl app logs <name> [-f]` | Show or follow an app's logs. |
+| `localctl app logs [name] [-f]` | Show or follow an app's logs. Inside its repository the name is optional. |
 | `localctl app exec [cmd...]` | Open a shell (default `sh`) in the app's pod. |
 | `localctl app prune [-y]` | Delete leftover data (volumes, secrets) of apps already taken down. |
 | `localctl app secrets set <KEY> [value]` | Store a secret as a Kubernetes Secret, never in `config.json`. |
@@ -324,6 +340,7 @@ The full documentation lives at **[psilvmoreira.github.io/localctl](https://psil
 | [Adding tools](https://psilvmoreira.github.io/localctl/adding-tools/) | Write your own per-app or cluster-wide addon |
 | [Troubleshooting](https://psilvmoreira.github.io/localctl/troubleshooting/) | Known issues, with cause and fix |
 | [Uninstalling](https://psilvmoreira.github.io/localctl/uninstalling/) | Full teardown reference |
+| [Contributing](https://psilvmoreira.github.io/localctl/contributing/) | Local setup, tests, pull requests, dependency policy, docs site |
 | [Releasing](https://psilvmoreira.github.io/localctl/releasing/) | How versions are cut and published |
 
 ## Releases and versioning
@@ -334,16 +351,21 @@ The full documentation lives at **[psilvmoreira.github.io/localctl](https://psil
   with notes and the package tarball.
 - Versions follow [Semantic Versioning](https://semver.org). Before `1.0.0`, minor versions may
   contain breaking changes.
-- npm releases are published from GitHub Actions with
+- Every pull request shows a **release preview**: the version that merging it would publish,
+  including any unreleased commits already on `master`.
+- npm releases are published from GitHub Actions through
+  [trusted publishing](https://docs.npmjs.com/trusted-publishers) (no npm tokens) with
   [provenance](https://docs.npmjs.com/generating-provenance-statements). The npm package page links
   each version to the exact commit and workflow run that built it.
+- Dependencies and GitHub Actions are kept up to date by Dependabot, with every action pinned to a
+  commit SHA.
 
 ## Contributing
 
 Issues and pull requests are welcome. The full guide (constraints, dependency policy, working on
 the docs site) is in [**Contributing**](https://psilvmoreira.github.io/localctl/contributing/).
 
-1. Fork the repository and create a branch.
+1. Fork the repository and create a branch from an up-to-date `master`.
 2. Make your change and run the tests:
    ```sh
    cd cli
@@ -352,14 +374,18 @@ the docs site) is in [**Contributing**](https://psilvmoreira.github.io/localctl/
    npm run test:pack   # the published package installs and runs
    ```
 3. Open a pull request with a [Conventional Commits](https://www.conventionalcommits.org/) title.
-   The title decides the next version:
+   PRs are squash-merged, so the title decides the next version. GitHub pre-fills it from the
+   branch name, which fails the title check: edit it.
 
    | Title | Release |
    |---|---|
-   | `fix: ...` | Patch (`0.2.0` → `0.2.1`) |
-   | `feat: ...` | Minor (`0.2.1` → `0.3.0`) |
-   | `feat!: ...` | Major (`0.3.0` → `1.0.0`) |
+   | `fix: ...`, `perf: ...` | Patch (`0.4.0` → `0.4.1`) |
+   | `feat: ...` | Minor (`0.4.1` → `0.5.0`) |
+   | `feat!: ...` | Major (`0.5.0` → `1.0.0`) |
    | `docs:` `chore:` `ci:` `refactor:` `test:` | No release |
+
+4. Check the **release preview** on the `pr-title` check and wait for every check to pass
+   (title, tests on Linux/macOS/Windows × Node 18/22, docs build, non-empty diff).
 
 <details>
 <summary><b>Repository layout</b></summary>
@@ -376,8 +402,10 @@ localctl/
 ├── cluster/manifests/   cluster-level manifests (TLS store, addon namespace)
 ├── schema/              JSON Schema for .local/config.json
 ├── examples/            ready-to-run sample apps
-├── docs/                documentation site (MkDocs Material, deployed to GitHub Pages)
-└── bin/                 bootstrap and uninstall scripts for source installs
+├── docs/                documentation pages (MkDocs Material, deployed to GitHub Pages)
+├── overrides/           docs site template overrides (landing page)
+├── bin/                 bootstrap and uninstall scripts for source installs
+└── .github/             CI, release and docs workflows, Dependabot config
 ```
 
 </details>
@@ -390,8 +418,10 @@ npm uninstall -g @localctl/cli  # the CLI itself
 ```
 
 `localctl uninstall` asks for confirmation (skip with `-y`) and is safe to re-run. It leaves the
-shared tools (`k3d`, `kubectl`, `tilt`, `mkcert`, `node`) and mkcert's root CA installed, since
-other projects may use them. It prints the exact commands to remove them too. Installed from
+shared tools (`k3d`, `kubectl`, `tilt`, `mkcert`, `helm`, `node`) and mkcert's root CA installed,
+since other projects may use them. It prints the exact commands to remove them for your OS
+(`brew uninstall ...` on macOS; `winget uninstall ...` plus the `~.localctl	ools` folder for
+Tilt on Windows). Installed from
 source with the bootstrap script? Use `./bin/uninstall.sh` or `./bin/uninstall.ps1` instead.
 Details: [**Uninstalling**](https://psilvmoreira.github.io/localctl/uninstalling/).
 
