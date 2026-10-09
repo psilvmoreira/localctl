@@ -64,8 +64,9 @@ This does everything:
 
 1. Detects your container engine and confirms it's running. Podman Desktop is tested; Docker
    Desktop and Rancher Desktop are experimental and print a warning.
-2. Installs anything missing: `k3d`, `kubectl`, `tilt`, `mkcert` (via Homebrew on macOS, winget on
-   Windows).
+2. Installs anything missing: `k3d`, `kubectl`, `tilt`, `mkcert`, `helm` (via Homebrew on macOS,
+   winget on Windows). Tilt isn't on winget, so on Windows it's downloaded from its GitHub release
+   into `~.localctl	ools`, which is added to your user PATH.
 3. Creates the `local-dev` k3d cluster, with ports 80/443 mapped to your machine, and starts a
    local image registry container (`localhost:5050` from your machine, `local-dev-registry:5000`
    from inside the cluster — see [Architecture](./architecture.md) for why it's a plain container

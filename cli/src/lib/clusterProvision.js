@@ -4,7 +4,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 const { run, capture, sleepSync, commandExists } = require('./exec');
 const { detectEngine, warnIfExperimental } = require('./engine');
-const { installIfMissing } = require('./toolInstall');
+const { installIfMissing, installTiltWindows } = require('./toolInstall');
 const { ensureInsecureRegistry } = require('./podman');
 const { DOMAIN } = require('./constants');
 const logger = require('./logger');
@@ -49,9 +49,9 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
     ensureInsecureRegistry(registryPort);
   }
 
-  installIfMissing('k3d', 'k3d', 'k3d-io.k3d');
+  installIfMissing('k3d', 'k3d', 'k3d.k3d');
   installIfMissing('kubectl', 'kubernetes-cli', 'Kubernetes.kubectl');
-  installIfMissing('tilt', 'tilt', 'Tilt.dev.tilt');
+  installIfMissing('tilt', 'tilt', installTiltWindows);
   installIfMissing('mkcert', 'mkcert', 'FiloSottile.mkcert');
   installIfMissing('helm', 'helm', 'Helm.Helm');
 

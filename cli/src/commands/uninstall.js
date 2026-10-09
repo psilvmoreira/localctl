@@ -91,7 +91,12 @@ async function uninstall(opts) {
   logger.success('Uninstall complete.');
   console.log('');
   console.log('Left in place (remove yourself if you want them gone too):');
-  console.log('  brew uninstall k3d kubectl tilt mkcert node   # only if nothing else needs them');
+  if (process.platform === 'win32') {
+    console.log('  winget uninstall k3d.k3d Kubernetes.kubectl FiloSottile.mkcert Helm.Helm   # only if nothing else needs them');
+    console.log('  Remove-Item -Recurse -Force ~\\.localctl\\tools   # tilt, if localctl installed it');
+  } else {
+    console.log('  brew uninstall k3d kubectl tilt mkcert helm   # only if nothing else needs them');
+  }
   console.log("  mkcert -uninstall   # removes the root CA from trust stores - affects EVERY");
   console.log('                      # mkcert-issued cert on this machine, not just *.local.test');
 }
