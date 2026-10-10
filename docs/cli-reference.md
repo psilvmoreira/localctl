@@ -14,7 +14,7 @@ Commands under `app` act on the app in the current directory, described by its
 
 | Command | Description |
 |---|---|
-| `localctl setup` | Install or repair the `default` project's infrastructure: container engine check, tools (`k3d`, `kubectl`, `tilt`, `mkcert`, `helm`), k3d cluster, local registry, TLS certificate and hosts file. Idempotent: safe to re-run any time. |
+| `localctl setup` | Install or repair the `default` project's infrastructure: container engine check, tools (`k3d`, `kubectl`, `tilt`, `mkcert`, `helm`), k3d cluster, local registry, TLS certificate and hosts file. Idempotent: safe to re-run any time. `--install-docker` (Linux only) installs Docker Engine first when no container engine is running; needs `sudo`. |
 | `localctl doctor` | Health check of the active project's environment. Every line should read `[ok]`. |
 | `localctl uninstall` | Remove everything `setup` and `profiles` created: every project's cluster, registries, hosts entries, certificates and state. See [Uninstalling](uninstalling.md). |
 | `localctl hosts sync` | Write every registered app subdomain into the hosts file. |

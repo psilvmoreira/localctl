@@ -1,7 +1,9 @@
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
-const { commandExists, run } = require('./exec');
+const { commandExists, run, capture } = require('./exec');
 const logger = require('./logger');
+const { detectDistro } = require('./linuxDistro');
 const { HOME_STATE_DIR } = require('./paths');
 
 // Tools that have no package-manager package on a platform get downloaded here instead. The
@@ -65,6 +67,141 @@ function installTiltWindows() {
   logger.success(`tilt installed in ${TOOLS_DIR} (added to your PATH for new terminals)`);
 }
 
+
+// ---- Linux ----
+// There's no single package manager to lean on across distros, so missing tools are fetched as
+// the vendors' own release binaries straight into TOOLS_DIR (no sudo, no distro packages). That
+// directory is on this process's PATH via addToolsDirToPath(), so setup carries on immediately.
+// Needs only curl (and tar for tilt/helm), which every mainstream distro ships.
+
+const LINUX_ARCH = { x64: 'amd64', arm64: 'arm64' };
+
+function linuxArch() {
+  const arch = LINUX_ARCH[process.arch];
+  if (!arch) throw new Error(`Unsupported CPU architecture "${process.arch}". Install the tool manually.`);
+  return arch;
+}
+
+function requireLinuxDownloadTools(...tools) {
+  const missing = tools.filter((t) => !commandExists(t));
+  if (missing.length) {
+    throw new Error(`${missing.join(' and ')} ${missing.length > 1 ? 'are' : 'is'} needed to download missing tools. Install ${missing.length > 1 ? 'them' : 'it'} with your package manager and re-run.`);
+  }
+}
+
+function download(url, dest) {
+  logger.info(`Downloading ${url}`);
+  run('curl', ['-fsSL', '--retry', '3', '-o', dest, url]);
+}
+
+// Final path segment of the URL a redirect lands on, e.g. ".../releases/tag/v0.33.0" -> "v0.33.0".
+function latestGitHubTag(repo) {
+  const res = capture('curl', [
+    '-fsSLI', '-o', '/dev/null', '-w', '%{url_effective}',
+    `https://github.com/${repo}/releases/latest`,
+  ]);
+  const tag = res.stdout.split('/').pop();
+  if (res.status !== 0 || !/^v?\d/.test(tag)) throw new Error(`Couldn't resolve the latest ${repo} release.`);
+  return tag;
+}
+
+function makeExecutable(file) {
+  fs.chmodSync(file, 0o755);
+}
+
+function installBinaryLinux(bin, url) {
+  fs.mkdirSync(TOOLS_DIR, { recursive: true });
+  const dest = path.join(TOOLS_DIR, bin);
+  download(url, dest);
+  makeExecutable(dest);
+}
+
+// Downloads a .tar.gz and moves one file out of it into TOOLS_DIR.
+function installFromTarballLinux(bin, url, innerPath) {
+  fs.mkdirSync(TOOLS_DIR, { recursive: true });
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `localctl-${bin}-`));
+  try {
+    const archive = path.join(tmp, 'archive.tar.gz');
+    download(url, archive);
+    run('tar', ['-xzf', archive, '-C', tmp]);
+    const dest = path.join(TOOLS_DIR, bin);
+    fs.copyFileSync(path.join(tmp, innerPath), dest);
+    makeExecutable(dest);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+const LINUX_INSTALLERS = {
+  k3d() {
+    installBinaryLinux('k3d', `https://github.com/k3d-io/k3d/releases/latest/download/k3d-linux-${linuxArch()}`);
+  },
+  kubectl() {
+    const version = capture('curl', ['-fsSL', 'https://dl.k8s.io/release/stable.txt']).stdout;
+    if (!/^v\d/.test(version)) throw new Error("Couldn't resolve the latest kubectl release.");
+    installBinaryLinux('kubectl', `https://dl.k8s.io/release/${version}/bin/linux/${linuxArch()}/kubectl`);
+  },
+  mkcert() {
+    installBinaryLinux('mkcert', `https://dl.filippo.io/mkcert/latest?for=linux/${linuxArch()}`);
+  },
+  helm() {
+    const version = capture('curl', ['-fsSL', 'https://get.helm.sh/helm-latest-version']).stdout;
+    if (!/^v\d/.test(version)) throw new Error("Couldn't resolve the latest helm release.");
+    const arch = linuxArch();
+    installFromTarballLinux('helm', `https://get.helm.sh/helm-${version}-linux-${arch}.tar.gz`, `linux-${arch}/helm`);
+  },
+  tilt() {
+    const version = latestGitHubTag('tilt-dev/tilt').replace(/^v/, '');
+    const arch = process.arch === 'arm64' ? 'arm64' : 'x86_64';
+    installFromTarballLinux('tilt', `https://github.com/tilt-dev/tilt/releases/download/v${version}/tilt.${version}.linux.${arch}.tar.gz`, 'tilt');
+  },
+};
+
+// Tools land in TOOLS_DIR, which localctl puts on its own PATH, but a terminal opened later (to
+// run `kubectl` by hand, say) wouldn't see them. Persist it in the shell's rc file, with the same
+// marker bin/bootstrap.sh uses so bin/uninstall.sh cleans it up. bash and zsh only: other shells
+// get the line to add themselves.
+function persistToolsDirOnPath() {
+  const shell = path.basename(process.env.SHELL || '');
+  const rcName = { zsh: '.zshrc', bash: '.bashrc' }[shell];
+  const line = 'export PATH="$HOME/.localctl/tools:$PATH"';
+  if (!rcName) {
+    logger.info(`Add ${TOOLS_DIR} to your PATH to use these tools from your own terminal: ${line}`);
+    return;
+  }
+  const rc = path.join(os.homedir(), rcName);
+  const current = fs.existsSync(rc) ? fs.readFileSync(rc, 'utf8') : '';
+  if (current.includes('.localctl/tools')) return;
+  fs.appendFileSync(rc, `\n# Added by localctl bootstrap\n${line}\n`);
+  logger.info(`Added ${TOOLS_DIR} to PATH in ~/${rcName} - open a new terminal to pick it up.`);
+}
+
+function installLinux(bin) {
+  const installer = LINUX_INSTALLERS[bin];
+  if (!installer) {
+    throw new Error(`"${bin}" is missing and automatic install isn't supported for it on Linux. Install it with your package manager.`);
+  }
+  requireLinuxDownloadTools('curl', ...(bin === 'helm' || bin === 'tilt' ? ['tar'] : []));
+  logger.step(`Installing ${bin} from its official release (no sudo, into ${TOOLS_DIR})...`);
+  installer();
+  addToolsDirToPath();
+  persistToolsDirOnPath();
+  logger.success(`${bin} installed in ${TOOLS_DIR}`);
+}
+
+// Distro-specific command for the NSS tools (certutil), which mkcert needs to trust its CA in
+// Firefox/Chromium. Not installed automatically: it needs sudo, and it's optional.
+function nssInstallHint() {
+  const { family } = detectDistro();
+  return {
+    debian: 'sudo apt install libnss3-tools',
+    rhel: 'sudo dnf install nss-tools',
+    arch: 'sudo pacman -S nss',
+    suse: 'sudo zypper install mozilla-nss-tools',
+    alpine: 'sudo apk add nss-tools',
+  }[family] || "your distro's NSS tools package (provides certutil)";
+}
+
 // macId: Homebrew formula name. winId: winget package id, or a function that installs the tool
 // when winget doesn't have it.
 function installIfMissing(bin, macId, winId) {
@@ -92,9 +229,11 @@ function installIfMissing(bin, macId, winId) {
       '--accept-package-agreements', '--accept-source-agreements',
     ]);
     addWingetLinksToPath();
+  } else if (process.platform === 'linux') {
+    installLinux(bin);
   } else {
     throw new Error(`"${bin}" is missing and automatic install isn't supported on this platform. Install it manually.`);
   }
 }
 
-module.exports = { installIfMissing, installTiltWindows, addToolsDirToPath, TOOLS_DIR };
+module.exports = { installIfMissing, installTiltWindows, addToolsDirToPath, nssInstallHint, TOOLS_DIR };

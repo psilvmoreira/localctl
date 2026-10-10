@@ -125,9 +125,10 @@ handles the build, push and live-sync loop. Full breakdown in [Architecture](arc
 </div>
 
 !!! info "Requirements"
-    **macOS** or **Windows**, a running container engine ([Podman Desktop](https://podman-desktop.io/)
-    tested; Docker Desktop and Rancher Desktop experimental), and **Homebrew** or **winget** for
-    the one-time tool install.
+    **macOS**, **Windows** or **Linux** (experimental, via `@localctl/cli@beta`), a running
+    container engine ([Podman Desktop](https://podman-desktop.io/) tested; Docker and Rancher
+    Desktop experimental), and **Homebrew** or **winget** for the one-time tool install (Linux
+    only needs `curl`).
 
 [Full walkthrough :material-arrow-right:](getting-started.md){ .md-button .md-button--primary }
 

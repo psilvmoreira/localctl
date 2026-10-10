@@ -19,6 +19,16 @@ if command_exists node; then
 elif command_exists brew; then
   log "Installing node via brew..."
   brew install node
+elif [ "$(uname -s)" = "Linux" ]; then
+  # No sudo from a script: print the right command for this distro and let the user run it.
+  NODE_HINT="your package manager's nodejs package, or https://nodejs.org"
+  if command_exists apt-get; then NODE_HINT="sudo apt install nodejs npm"
+  elif command_exists dnf; then NODE_HINT="sudo dnf install nodejs npm"
+  elif command_exists pacman; then NODE_HINT="sudo pacman -S nodejs npm"
+  elif command_exists zypper; then NODE_HINT="sudo zypper install nodejs npm"
+  elif command_exists apk; then NODE_HINT="sudo apk add nodejs npm"
+  fi
+  die "Node.js 18+ is required. Install it with: $NODE_HINT (distro packages can be old - https://nodejs.org or nvm always work), then re-run."
 else
   die "Node.js is required. Install it (https://nodejs.org) or Homebrew (https://brew.sh), then re-run."
 fi
@@ -40,7 +50,11 @@ chmod +x "$LOCALCTL_BIN_DIR/localctl"
 SHELL_RC=""
 case "${SHELL:-}" in
   */zsh) SHELL_RC="$HOME/.zshrc" ;;
-  */bash) SHELL_RC="$HOME/.bash_profile" ;;
+  # macOS terminals start login shells (.bash_profile); Linux terminals start interactive
+  # non-login ones, which only read .bashrc.
+  */bash)
+    if [ "$(uname -s)" = "Linux" ]; then SHELL_RC="$HOME/.bashrc"; else SHELL_RC="$HOME/.bash_profile"; fi
+    ;;
 esac
 
 case ":$PATH:" in

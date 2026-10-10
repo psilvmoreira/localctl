@@ -17,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The CLI targets macOS and Windows users; Linux is the cheap baseline. Node 18 is the
-        # declared engines floor, 22 is current LTS.
+        # The CLI targets macOS and Windows users, plus experimental Linux support (which also makes
+        # it the cheap baseline). Node 18 is the declared engines floor, 22 is current LTS.
         os: [ubuntu-latest, macos-latest, windows-latest]
         node: [18, 22]
     defaults:

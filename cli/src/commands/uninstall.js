@@ -24,7 +24,7 @@ async function uninstall(opts) {
   console.log('This will remove everything "localctl setup"/"localctl profiles" set up:');
   console.log(`  - Every project's k3d cluster (${projects.map((p) => p.cluster).join(', ')}) and everything deployed in them`);
   console.log('  - Their local image registry containers');
-  console.log('  - Podman VM insecure-registry config (Podman only, if present)');
+  console.log('  - Podman insecure-registry config (Podman only, if present)');
   console.log('  - The *.local.test block in your hosts file');
   console.log('  - Any background dev loop `localctl app up` left running, and its state');
   console.log('  - ~/.localctl/certs, the app registry state, and the project registry (~/.localctl/profiles.json)');
@@ -94,6 +94,8 @@ async function uninstall(opts) {
   if (process.platform === 'win32') {
     console.log('  winget uninstall k3d.k3d Kubernetes.kubectl FiloSottile.mkcert Helm.Helm   # only if nothing else needs them');
     console.log('  Remove-Item -Recurse -Force ~\\.localctl\\tools   # tilt, if localctl installed it');
+  } else if (process.platform === 'linux') {
+    console.log('  rm -rf ~/.localctl/tools   # k3d, kubectl, tilt, mkcert and helm, if localctl installed them');
   } else {
     console.log('  brew uninstall k3d kubectl tilt mkcert helm   # only if nothing else needs them');
   }

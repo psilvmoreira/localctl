@@ -73,14 +73,15 @@ JSON file per app.
 
 | Requirement | Notes |
 |---|---|
-| **macOS** or **Windows** | Windows commands run in PowerShell. |
+| **macOS**, **Windows** or **Linux** | Windows commands run in PowerShell. Linux support is [experimental](#linux-experimental). |
 | **Node.js 18+** | Needed to install the CLI from npm. |
 | **Container engine** | [Podman Desktop](https://podman-desktop.io/) (or Docker Desktop / Rancher Desktop), running. See [supported container engines](#supported-container-engines). |
-| **Homebrew** or **winget** | Used once by `localctl setup` to install missing tools. |
+| **Homebrew** (macOS) or **winget** (Windows) | Used once by `localctl setup` to install missing tools. Linux needs only `curl`. |
 
 `localctl setup` installs `k3d`, `kubectl`, `tilt`, `mkcert` and `helm` for you if they're missing.
 On Windows, Tilt isn't on winget, so it's downloaded from its GitHub release into
-`~.localctl	ools` and added to your user PATH.
+`~\.localctl\tools` and added to your user PATH. On Linux, all five tools are downloaded as
+official release binaries into `~/.localctl/tools` (no sudo, no distro packages).
 
 ### Supported container engines
 
@@ -89,11 +90,62 @@ On Windows, Tilt isn't on winget, so it's downloaded from its GitHub release int
 | [Podman Desktop](https://podman-desktop.io/) | ✅ Tested |
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | 🧪 Experimental — setup and app deploy verified on Windows |
 | [Rancher Desktop](https://rancherdesktop.io/) | 🧪 Experimental — not yet tested |
+| Docker Engine / native Podman (Linux) | 🧪 Experimental — see [Linux](#linux-experimental) |
 
 Experimental engines are detected and should work, since k3d only needs a Docker-compatible API,
 but they haven't been through a full test cycle yet. `localctl setup` and `localctl doctor` print
 a warning when one is in use. If you try one, please
 [report how it went](https://github.com/psilvmoreira/localctl/issues/new).
+
+### Required tools
+
+What has to be on your machine **before** `localctl setup`, and what `setup` installs for you:
+
+| | You install | `localctl setup` installs |
+|---|---|---|
+| **All platforms** | **Node.js 18+** (to install and run the CLI), a **container engine** | `k3d`, `kubectl`, `tilt`, `mkcert`, `helm` |
+| **macOS** | [Homebrew](https://brew.sh) | via `brew` (plus `nss` for Firefox, optional) |
+| **Windows** | `winget` (ships with Windows) | via `winget`, Tilt from its GitHub release |
+| **Linux** | `curl` and `tar`, `sudo` (hosts file, CA trust) | downloaded as release binaries into `~/.localctl/tools` |
+
+`localctl setup` needs administrator rights once, for the `*.local.test` hosts entry and the local
+CA trust.
+
+### Linux (experimental)
+
+Linux support is **experimental**: it hasn't been through a full test cycle (CI only runs the
+smoke tests there), and `setup`/`doctor` print a warning. It's published on the `beta` dist-tag:
+
+```sh
+npm install -g @localctl/cli@beta
+```
+
+Targeted distributions, all with systemd and a mkcert-supported trust store:
+
+| Family | Distributions | Docker Engine install |
+|---|---|---|
+| Debian | Ubuntu, Debian, Linux Mint, Pop!_OS | `localctl setup --install-docker` (Docker's official script) |
+| Red Hat | Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream | `localctl setup --install-docker` (Docker's official script) |
+| Arch | Arch, Manjaro, EndeavourOS | `localctl setup --install-docker` (`pacman`) |
+| SUSE | openSUSE Leap/Tumbleweed | `localctl setup --install-docker` (`zypper`) |
+
+Other distributions (Alpine, Void, Gentoo, NixOS, immutable/atomic desktops) may work if you
+bring Docker (or Podman) and Node.js yourself, but aren't targeted. WSL needs the Windows hosts
+file edited too.
+
+What's different on Linux:
+
+- **Docker Engine** is the recommended engine (root daemon, nothing else to configure). If none is
+  running, `localctl setup --install-docker` installs it for the families above. It needs `sudo`,
+  and you must **log out and back in** afterwards so your user joins the `docker` group.
+- **Podman** runs natively, no VM. The insecure-registry entry goes in
+  `~/.config/containers/registries.conf.d/` (no sudo, no restart). k3d needs Podman's API socket:
+  `systemctl --user enable --now podman.socket`. Rootless Podman also can't bind :80/:443 by
+  default: `sudo sysctl net.ipv4.ip_unprivileged_port_start=80`.
+- **Firefox/Chromium trust** needs `certutil` (`libnss3-tools` on Debian/Ubuntu, `nss-tools` on
+  Fedora). `setup` prints the command for your distro; install it and re-run `mkcert -install`.
+
+Hit a problem? [Open an issue](https://github.com/psilvmoreira/localctl/issues/new).
 
 ## Installation
 

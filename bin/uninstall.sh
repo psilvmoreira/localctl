@@ -37,7 +37,7 @@ fi
 
 # The CLI process that just ran can't delete the shim it's executing from - finish that here,
 # now that it has already exited.
-for RC in "$HOME/.zshrc" "$HOME/.bash_profile"; do
+for RC in "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.bashrc"; do
   if [ -f "$RC" ] && grep -qE "# Added by (localctl|Project-Infra) bootstrap" "$RC"; then
     TMP="$(mktemp)"
     awk '
@@ -59,6 +59,11 @@ echo
 ok "Uninstall complete."
 echo
 echo "Left in place (remove yourself if you want them gone too):"
-echo "  brew uninstall k3d kubectl tilt mkcert node   # only if nothing else needs them"
+if [ "$(uname -s)" = "Linux" ]; then
+  echo "  (k3d, kubectl, tilt, mkcert and helm installed by localctl lived in ~/.localctl/tools, now removed;"
+  echo "   tools you installed yourself are untouched)"
+else
+  echo "  brew uninstall k3d kubectl tilt mkcert node   # only if nothing else needs them"
+fi
 echo "  mkcert -uninstall   # removes the root CA from trust stores - affects EVERY mkcert-issued"
 echo "                      # cert on this machine, not just *.local.test"

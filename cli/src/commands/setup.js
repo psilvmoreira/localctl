@@ -3,8 +3,17 @@ const { syncHosts } = require('../lib/hostsFile');
 const { setActive } = require('../lib/profileStore');
 const { DEFAULT_CLUSTER_NAME, DEFAULT_HTTP_PORT, DEFAULT_HTTPS_PORT, DOMAIN, REGISTRY_HOST_PORT } = require('../lib/constants');
 const logger = require('../lib/logger');
+const { detectEngine } = require('../lib/engine');
+const { installDocker } = require('../lib/linuxDistro');
 
-function setup() {
+function setup(opts) {
+  if (opts.installDocker) {
+    if (process.platform !== 'linux') {
+      throw new Error('--install-docker is only available on Linux. Install Docker Desktop or Podman Desktop instead.');
+    }
+    if (detectEngine()) logger.success('A container engine is already running, nothing to install');
+    else installDocker();
+  }
   provisionCluster({
     clusterName: DEFAULT_CLUSTER_NAME,
     httpPort: DEFAULT_HTTP_PORT,
@@ -32,5 +41,6 @@ module.exports = (program) => {
   program
     .command('setup')
     .description('One-click local infra setup for the default project: container engine, tools, k3d cluster, TLS, hosts')
+    .option('--install-docker', 'Linux only: install Docker Engine first if no container engine is running (needs sudo)')
     .action(setup);
 };
