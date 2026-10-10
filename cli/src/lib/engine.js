@@ -4,8 +4,8 @@ const logger = require('./logger');
 // Support status per engine lives in cli/package.json ("localctl.containerEngines"), so marking an
 // engine as tested is a one-word config change, not a code change. "tested" means verified end to
 // end; anything else (or an engine missing from the map) gets the experimental warning.
-const { localctl: { containerEngines = {} } = {} } = require('../../package.json');
-const ENGINE_LABELS = { docker: 'Docker Desktop', podman: 'Podman', 'rancher-desktop': 'Rancher Desktop' };
+const { localctl: { containerEngines = {}, platforms = {} } = {} } = require('../../package.json');
+const ENGINE_LABELS = { docker: 'Docker', podman: 'Podman', 'rancher-desktop': 'Rancher Desktop' };
 const ISSUES_URL = 'https://github.com/psilvmoreira/localctl/issues';
 
 // Returns { engine, bin } - `engine` names what's actually running (docker/podman/rancher-desktop),
@@ -33,4 +33,14 @@ function warnIfExperimental(engine) {
   logger.warn(`If something breaks, please report it: ${ISSUES_URL}`);
 }
 
-module.exports = { detectEngine, warnIfExperimental };
+const PLATFORM_LABELS = { darwin: 'macOS', win32: 'Windows', linux: 'Linux' };
+
+// Same idea as warnIfExperimental(), for the operating system: platform status lives in
+// cli/package.json ("localctl.platforms").
+function warnIfExperimentalPlatform() {
+  if (!platforms[process.platform] || platforms[process.platform] === 'tested') return;
+  logger.warn(`${PLATFORM_LABELS[process.platform] || process.platform} support is experimental - it hasn't been through a full test cycle yet.`);
+  logger.warn(`If something breaks, please report it: ${ISSUES_URL}`);
+}
+
+module.exports = { detectEngine, warnIfExperimental, warnIfExperimentalPlatform };

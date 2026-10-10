@@ -47,6 +47,9 @@ Push or merge to a `beta` branch. Versions look like `0.3.0-beta.1` and are publ
 `beta` dist-tag, so `npm install -g @localctl/cli` never picks them up. Install them with
 `npm install -g @localctl/cli@beta`. Merging `beta` into `master` releases the stable version.
 
+Experimental features (for example Linux support) ship this way first: open the PR against `beta`
+instead of `master`, and promote it once it has been tested.
+
 ## What CI checks
 
 Every PR runs:

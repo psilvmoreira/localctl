@@ -7,10 +7,22 @@ description: Install localctl, deploy your first app, and set up more than one p
 # Getting started
 
 !!! info "Before you start"
-    You need **macOS** or **Windows**, **Node.js 18+**, a running container engine
-    ([Podman Desktop](https://podman-desktop.io/) is tested; Docker Desktop and Rancher Desktop are
-    experimental), and **Homebrew** (macOS) or **winget** (Windows). Everything else is installed
-    for you.
+    You need **macOS**, **Windows** or **Linux** (experimental, install with
+    `npm install -g @localctl/cli@beta`), **Node.js 18+**, a running container engine
+    ([Podman Desktop](https://podman-desktop.io/) is tested; Docker and Rancher Desktop are
+    experimental), and **Homebrew** (macOS) or **winget** (Windows). On Linux, only `curl` is
+    needed. Everything else is installed for you.
+
+??? abstract "Required tools"
+    | | You install | `localctl setup` installs |
+    |---|---|---|
+    | **All** | Node.js 18+, a container engine | k3d, kubectl, tilt, mkcert, helm |
+    | **macOS** | Homebrew | via `brew` |
+    | **Windows** | winget (ships with Windows) | via `winget` |
+    | **Linux** | `curl`, `tar`, `sudo` | release binaries in `~/.localctl/tools` |
+
+    On Linux, `localctl setup --install-docker` installs Docker Engine on Debian/Ubuntu,
+    Fedora/RHEL, Arch and openSUSE families, then asks you to log out and in once.
 
 ## 1. One-time machine setup
 

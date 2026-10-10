@@ -48,6 +48,11 @@
     "node": ">=18"
   },
   "localctl": {
+    "platforms": {
+      "darwin": "tested",
+      "win32": "tested",
+      "linux": "experimental"
+    },
     "containerEngines": {
       "podman": "tested",
       "docker": "experimental",

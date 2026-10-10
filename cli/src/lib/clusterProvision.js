@@ -3,11 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const { run, capture, sleepSync, commandExists } = require('./exec');
-const { detectEngine, warnIfExperimental } = require('./engine');
-const { installIfMissing, installTiltWindows } = require('./toolInstall');
-const { ensureInsecureRegistry } = require('./podman');
+const { detectEngine, warnIfExperimental, warnIfExperimentalPlatform } = require('./engine');
+const { installIfMissing, installTiltWindows, nssInstallHint } = require('./toolInstall');
+const { ensureInsecureRegistry, ensurePodmanSocket, blockedPrivilegedPorts } = require('./podman');
 const { DOMAIN } = require('./constants');
 const logger = require('./logger');
+const { detectDistro, dockerInstallSteps } = require('./linuxDistro');
 
 // Cluster-level manifests: bundled under cli/assets/ in the npm package (copied there by
 // scripts/sync-assets.js at pack time), or read straight from the repo root in a git checkout.
@@ -15,6 +16,15 @@ const BUNDLED_MANIFESTS_DIR = path.resolve(__dirname, '..', '..', 'assets', 'man
 const MANIFESTS_DIR = fs.existsSync(BUNDLED_MANIFESTS_DIR)
   ? BUNDLED_MANIFESTS_DIR
   : path.resolve(__dirname, '..', '..', '..', 'cluster', 'manifests');
+
+function isWsl() {
+  if (process.platform !== 'linux') return false;
+  try {
+    return /microsoft/i.test(fs.readFileSync('/proc/version', 'utf8'));
+  } catch (e) {
+    return false;
+  }
+}
 
 function registryNameFor(clusterName) {
   return `${clusterName}-registry`;
@@ -27,16 +37,78 @@ function clusterExists(clusterName) {
     .includes(clusterName);
 }
 
+// k3d writes the API server as https://0.0.0.0:<port> into kubeconfig. Linux and Windows treat
+// 0.0.0.0 as "this host", but macOS refuses to connect to it ("can't assign requested address"),
+// so every kubectl call fails. Selects the cluster's context and points it at 127.0.0.1 instead,
+// which also repairs clusters created before this fix.
+function useClusterContext(clusterName) {
+  const context = `k3d-${clusterName}`;
+  run('kubectl', ['config', 'use-context', context], { stdio: 'ignore' });
+  const server = capture('kubectl', [
+    'config', 'view', '--minify', '-o', 'jsonpath={.clusters[0].cluster.server}',
+  ]).stdout;
+  if (server.includes('//0.0.0.0:')) {
+    run('kubectl', [
+      'config', 'set-cluster', context, `--server=${server.replace('//0.0.0.0:', '//127.0.0.1:')}`,
+    ], { stdio: 'ignore' });
+  }
+}
+
+// Generated fresh per call, not a static file: every Main project needs its own cluster name,
+// ports, and registry mirror name baked in.
+function buildK3dConfig({ clusterName, httpPort, httpsPort, registryName }) {
+  return {
+    apiVersion: 'k3d.io/v1alpha5',
+    kind: 'Simple',
+    metadata: { name: clusterName },
+    servers: 1,
+    agents: 0,
+    ports: [
+      { port: `${httpPort}:80`, nodeFilters: ['loadbalancer'] },
+      { port: `${httpsPort}:443`, nodeFilters: ['loadbalancer'] },
+    ],
+    options: {
+      k3s: {
+        // metrics-server only feeds `kubectl top` and HPAs, which a local dev loop doesn't use;
+        // dropping it saves memory. servicelb must stay: it's what opens :80/:443 on the node for
+        // Traefik's LoadBalancer Service, so disabling it would break every ingress.
+        extraArgs: [{ arg: '--disable=metrics-server', nodeFilters: ['server:*'] }],
+      },
+    },
+    // Plain container + mirror config, not k3d's built-in `registries.create`: that hard-codes
+    // attaching to a network literally named "bridge", which Docker has by default but Podman
+    // does not, breaking cluster creation there.
+    registries: {
+      config: yaml.dump({ mirrors: { [`${registryName}:5000`]: { endpoint: [`http://${registryName}:5000`] } } }),
+    },
+  };
+}
+
 // Brings up (idempotently) one Main project's cluster: container engine + tool checks, the k3d
 // cluster itself (own ports, since two clusters can't both bind host :80/:443), its own local
 // registry container, and the shared *.local.test TLS cert wired into its Traefik. Used by both
 // `localctl setup` (the "default" profile, unchanged ports/names from before multi-project
 // support) and `localctl profiles new`/`switch` (any other Main project).
 function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
+  warnIfExperimentalPlatform();
+  if (isWsl()) {
+    logger.warn('WSL detected: browsers on Windows read C:\\Windows\\System32\\drivers\\etc\\hosts, not this distro\'s /etc/hosts, and WSL may regenerate /etc/hosts on restart. Add the *.local.test entries to the Windows hosts file too (localctl prints them), or run localctl from Windows instead.');
+  }
   logger.step('Detecting container engine...');
   const detected = detectEngine();
   if (!detected) {
-    throw new Error('No running container engine found. Start Docker Desktop, Podman, or Rancher Desktop and re-run.');
+    let linuxHint = '';
+    if (process.platform === 'linux') {
+      const steps = dockerInstallSteps(detectDistro().family);
+      linuxHint = '\nOn Linux: if Docker is installed, make sure the service runs and your user can reach it' +
+        ' (member of the "docker" group, then log out and in).';
+      if (steps) {
+        linuxHint += `\nTo install Docker Engine, run "localctl setup --install-docker", or by hand:\n  ${steps.join('\n  ')}`;
+      } else {
+        linuxHint += '\nInstall Docker Engine for your distro: https://docs.docker.com/engine/install/';
+      }
+    }
+    throw new Error(`No running container engine found. Start Docker Desktop, Podman, or Rancher Desktop and re-run.${linuxHint}`);
   }
   const { engine, bin: engineBin } = detected;
   logger.success(`Using container engine: ${engine} (${engineBin} CLI)`);
@@ -47,6 +119,14 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
   // exist, but re-running it per registry port is cheap and idempotent.
   if (engine === 'podman') {
     ensureInsecureRegistry(registryPort);
+    if (process.platform === 'linux') {
+      const socketProblem = ensurePodmanSocket();
+      if (socketProblem) logger.warn(socketProblem);
+      const blocked = blockedPrivilegedPorts([httpPort, httpsPort]);
+      if (blocked.length) {
+        logger.warn(`Rootless Podman can't bind host port(s) ${blocked.join(', ')}. Allow it with: sudo sysctl net.ipv4.ip_unprivileged_port_start=80 (add it to /etc/sysctl.d/ to persist).`);
+      }
+    }
   }
 
   installIfMissing('k3d', 'k3d', 'k3d.k3d');
@@ -54,39 +134,58 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
   installIfMissing('tilt', 'tilt', installTiltWindows);
   installIfMissing('mkcert', 'mkcert', 'FiloSottile.mkcert');
   installIfMissing('helm', 'helm', 'Helm.Helm');
+  // mkcert can only add its CA to Firefox's trust store when NSS's certutil is present. It's
+  // optional (Safari/Chrome don't need it), so a failed or impossible install - e.g. no Homebrew -
+  // only warns. macOS installs it automatically; Linux needs sudo, so it only prints the command.
+  if (!commandExists('certutil')) {
+    if (process.platform === 'darwin') {
+      if (commandExists('brew')) {
+        try {
+          installIfMissing('certutil', 'nss');
+        } catch (e) {
+          logger.warn(`Couldn't install nss (${e.message}). Firefox won't trust the local CA until you run "brew install nss && mkcert -install".`);
+        }
+      } else {
+        logger.warn('Homebrew not found, skipping nss. Firefox won\'t trust the local CA until certutil is installed and "mkcert -install" is re-run.');
+        logger.info('Tip: install Homebrew (https://brew.sh) so localctl can install missing tools for you, then run "brew install nss".');
+      }
+    } else if (process.platform === 'linux') {
+      logger.warn(`certutil not found, so Firefox/Chromium won't trust the local CA. Install it with: ${nssInstallHint()} - then re-run "mkcert -install".`);
+    }
+  }
 
   const registryName = registryNameFor(clusterName);
 
   if (clusterExists(clusterName)) {
     logger.success(`k3d cluster '${clusterName}' already exists`);
+    // A reboot or engine restart leaves the cluster stopped; `start` is a no-op when it's running.
+    run('k3d', ['cluster', 'start', clusterName, '--wait'], { stdio: 'ignore', allowFail: true });
   } else {
     logger.step(`Creating k3d cluster '${clusterName}'...`);
-    // Generated fresh per call, not a static file: every Main project needs its own cluster
-    // name, ports, and registry mirror name baked in.
-    const k3dConfig = {
-      apiVersion: 'k3d.io/v1alpha5',
-      kind: 'Simple',
-      metadata: { name: clusterName },
-      servers: 1,
-      agents: 0,
-      ports: [
-        { port: `${httpPort}:80`, nodeFilters: ['loadbalancer'] },
-        { port: `${httpsPort}:443`, nodeFilters: ['loadbalancer'] },
-      ],
-      // Plain container + mirror config, not k3d's built-in `registries.create`: that hard-codes
-      // attaching to a network literally named "bridge", which Docker has by default but Podman
-      // does not, breaking cluster creation there.
-      registries: {
-        config: yaml.dump({ mirrors: { [`${registryName}:5000`]: { endpoint: [`http://${registryName}:5000`] } } }),
-      },
-    };
+    const k3dConfig = buildK3dConfig({ clusterName, httpPort, httpsPort, registryName });
     const tmpConfig = path.join(os.tmpdir(), `localctl-k3d-config-${clusterName}.yaml`);
     fs.writeFileSync(tmpConfig, yaml.dump(k3dConfig));
     run('k3d', ['cluster', 'create', '--config', tmpConfig, '--wait']);
     fs.rmSync(tmpConfig, { force: true });
     logger.success('Cluster created');
   }
-  run('kubectl', ['config', 'use-context', `k3d-${clusterName}`], { stdio: 'ignore' });
+  useClusterContext(clusterName);
+
+  // Right after a (re)start the load balancer can accept connections before the API server is
+  // answering (EOF / connection refused), so wait for it before the first real kubectl call.
+  logger.step('Waiting for the Kubernetes API...');
+  // After an engine restart the server container can get a new IP while the load balancer
+  // (nginx, resolves upstreams only at startup) keeps the old one, so the API never answers.
+  // Restarting the load balancer once re-resolves it.
+  let lbRestarted = false;
+  for (let i = 0; i < 60; i += 1) {
+    if (capture('kubectl', ['get', '--raw', '/readyz']).status === 0) break;
+    if (i === 5 && !lbRestarted) {
+      lbRestarted = true;
+      run(engineBin, ['restart', `k3d-${clusterName}-serverlb`], { stdio: 'ignore', allowFail: true });
+    }
+    sleepSync(2000);
+  }
 
   const registryNetwork = `k3d-${clusterName}`;
   const existingNames = capture(engineBin, ['ps', '-a', '--format', '{{.Names}}']).stdout.split('\n');
@@ -165,7 +264,7 @@ function ensureClusterUp(clusterName, profileName) {
     const fix = profileName === 'default' ? 'localctl setup' : `localctl profiles switch ${profileName}`;
     throw new Error(`No cluster running for project "${profileName}". Run "${fix}" to start it.`);
   }
-  run('kubectl', ['config', 'use-context', `k3d-${clusterName}`], { stdio: 'ignore' });
+  useClusterContext(clusterName);
 }
 
-module.exports = { provisionCluster, teardownCluster, clusterExists, registryNameFor, ensureClusterUp };
+module.exports = { buildK3dConfig, provisionCluster, teardownCluster, clusterExists, registryNameFor, ensureClusterUp };

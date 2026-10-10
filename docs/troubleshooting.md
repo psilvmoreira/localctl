@@ -277,3 +277,28 @@ support](./architecture.md#multi-project-support)):
   project you created with `localctl profiles new` isn't up. `switch` brings up whichever Main
   project owns it (tearing down other Main projects first if this one is `exclusive` - see
   `localctl profiles status`).
+
+## Linux (experimental)
+
+Linux hasn't been through a full test cycle. These are the known rough edges:
+
+**`No running container engine found`** - run `localctl setup --install-docker` (Debian, Red Hat,
+Arch and SUSE families), then log out and back in so your user is in the `docker` group. If Docker
+is already installed: `sudo systemctl enable --now docker`, and check `docker info` works without
+`sudo`.
+
+**`k3d` can't reach the container engine with Podman** - k3d talks to the Docker API socket, which
+Podman only serves when its socket service runs: `systemctl --user enable --now podman.socket`.
+`localctl setup` sets `DOCKER_HOST` for you when the socket exists.
+
+**Cluster creation fails binding port 80/443 (rootless Podman)** - unprivileged users can't bind
+ports below 1024 by default. `sudo sysctl net.ipv4.ip_unprivileged_port_start=80`, and add
+`net.ipv4.ip_unprivileged_port_start=80` to a file in `/etc/sysctl.d/` to keep it after reboot.
+
+**Push fails with `server gave HTTP response to HTTPS client`** - the registry entry lives in
+`~/.config/containers/registries.conf.d/999-local-dev.conf` (or
+`/etc/containers/registries.conf.d/` when run as root). Check that the `localhost:<port>` block is
+there; re-running `localctl setup` re-creates it.
+
+**Firefox/Chromium still show a certificate warning** - install `certutil` (`sudo apt install
+libnss3-tools`, `sudo dnf install nss-tools`, `sudo pacman -S nss`), then run `mkcert -install`.
