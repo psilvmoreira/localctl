@@ -8,6 +8,7 @@ const { installIfMissing, installTiltWindows, nssInstallHint } = require('./tool
 const { ensureInsecureRegistry, ensurePodmanSocket, blockedPrivilegedPorts } = require('./podman');
 const { DOMAIN } = require('./constants');
 const logger = require('./logger');
+const { CERTS_DIR } = require('./paths');
 const { detectDistro, dockerInstallSteps } = require('./linuxDistro');
 
 // Cluster-level manifests: bundled under cli/assets/ in the npm package (copied there by
@@ -43,6 +44,12 @@ function clusterExists(clusterName) {
 // which also repairs clusters created before this fix.
 function useClusterContext(clusterName) {
   const context = `k3d-${clusterName}`;
+  // The cluster can exist while this kubeconfig knows nothing about it (a deleted or replaced
+  // ~/.kube/config, a different KUBECONFIG): ask k3d to write it back instead of failing.
+  const known = capture('kubectl', ['config', 'get-contexts', '-o', 'name']).stdout.split('\n');
+  if (!known.includes(context)) {
+    run('k3d', ['kubeconfig', 'merge', clusterName, '--kubeconfig-merge-default'], { stdio: 'ignore', allowFail: true });
+  }
   run('kubectl', ['config', 'use-context', context], { stdio: 'ignore' });
   const server = capture('kubectl', [
     'config', 'view', '--minify', '-o', 'jsonpath={.clusters[0].cluster.server}',
@@ -84,6 +91,80 @@ function buildK3dConfig({ clusterName, httpPort, httpsPort, registryName }) {
   };
 }
 
+// Right after a (re)start the load balancer can accept connections before the API server is
+// answering (EOF / connection refused), so wait for it before the first real kubectl call.
+// Also after an engine restart the server container can get a new IP while the load balancer
+// (nginx, resolves upstreams only at startup) keeps the old one, so the API never answers;
+// restarting the load balancer once re-resolves it. Returns true once the API is ready.
+function waitForClusterApi(engineBin, clusterName, { attempts = 60, quiet = false } = {}) {
+  if (!quiet) logger.step('Waiting for the Kubernetes API...');
+  let lbRestarted = false;
+  for (let i = 0; i < attempts; i += 1) {
+    if (capture('kubectl', ['get', '--raw', '/readyz']).status === 0) return true;
+    if (i === 5 && !lbRestarted) {
+      lbRestarted = true;
+      run(engineBin, ['restart', `k3d-${clusterName}-serverlb`], { stdio: 'ignore', allowFail: true });
+    }
+    sleepSync(2000);
+  }
+  return false;
+}
+
+// k3d's --wait only waits for node readiness, not for Traefik's helm-install job to finish
+// registering its CRDs, so applying TLSStore any earlier races and fails intermittently. On a slow
+// machine (first image pulls, a nested engine) that takes minutes, so poll for the CRD to be
+// *Established* instead of giving up after one fixed wait, and say why if it never is.
+function waitForTraefikCrds(attempts = 150) {
+  logger.step('Waiting for Traefik CRDs...');
+  let last = 'not found yet';
+  for (let i = 0; i < attempts; i += 1) {
+    const r = capture('kubectl', [
+      'get', 'crd', 'tlsstores.traefik.io',
+      '-o', 'jsonpath={.status.conditions[?(@.type=="Established")].status}',
+    ]);
+    if (r.status === 0 && r.stdout === 'True') return;
+    last = r.status === 0 ? `Established=${r.stdout || 'unknown'}` : (r.stderr.split('\n')[0] || 'not found yet');
+    sleepSync(2000);
+  }
+  throw new Error(
+    `Traefik's CRDs (tlsstores.traefik.io) were not ready after ${Math.round((attempts * 2) / 60)} minutes (${last}). ` +
+    'Check "kubectl -n kube-system get pods" - the traefik helm-install jobs are probably still pulling images.',
+  );
+}
+
+// The CRDs existing does not mean Traefik is serving: on a slow machine its pod can still be
+// starting minutes later, and an app deployed in that window answers with a dropped connection.
+// Waiting here makes "cluster ready" mean the ingress actually accepts traffic.
+function waitForTraefik(attempts = 150) {
+  logger.step('Waiting for Traefik to accept traffic...');
+  for (let i = 0; i < attempts; i += 1) {
+    if (capture('kubectl', ['get', 'deployment', 'traefik', '-n', 'kube-system']).status === 0) break;
+    sleepSync(2000);
+  }
+  const res = capture('kubectl', ['rollout', 'status', 'deployment/traefik', '-n', 'kube-system', '--timeout=300s']);
+  if (res.status !== 0) {
+    throw new Error(
+      `Traefik did not become ready in 5 minutes (${(res.stderr || res.stdout).split('\n')[0]}). ` +
+      'Check "kubectl -n kube-system get pods".',
+    );
+  }
+}
+
+// A CRD can be Established a moment before the API server's discovery serves it, which surfaces as
+// "no matches for kind". Retrying the apply covers that window.
+function applyWithRetry(file, attempts = 15) {
+  let res;
+  for (let i = 0; i < attempts; i += 1) {
+    res = capture('kubectl', ['apply', '-f', file]);
+    if (res.status === 0) {
+      if (res.stdout) console.log(res.stdout);
+      return;
+    }
+    sleepSync(2000);
+  }
+  throw new Error(`kubectl apply -f ${path.basename(file)} failed after ${attempts} attempts: ${res.stderr}`);
+}
+
 // Brings up (idempotently) one Main project's cluster: container engine + tool checks, the k3d
 // cluster itself (own ports, since two clusters can't both bind host :80/:443), its own local
 // registry container, and the shared *.local.test TLS cert wired into its Traefik. Used by both
@@ -99,13 +180,18 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
   if (!detected) {
     let linuxHint = '';
     if (process.platform === 'linux') {
-      const steps = dockerInstallSteps(detectDistro().family);
-      linuxHint = '\nOn Linux: if Docker is installed, make sure the service runs and your user can reach it' +
-        ' (member of the "docker" group, then log out and in).';
-      if (steps) {
-        linuxHint += `\nTo install Docker Engine, run "localctl setup --install-docker", or by hand:\n  ${steps.join('\n  ')}`;
+      if (commandExists('docker') || commandExists('podman')) {
+        // Installed but not usable: reinstalling won't help, the daemon or permissions are the issue.
+        linuxHint = '\nA container engine is installed but not responding. Start the service' +
+          ' (`sudo systemctl enable --now docker`, or `systemctl --user enable --now podman.socket` for Podman;' +
+          ' without systemd, start `dockerd` yourself) and make sure your user can reach it' +
+          ' (member of the "docker" group, then log out and in).';
       } else {
-        linuxHint += '\nInstall Docker Engine for your distro: https://docs.docker.com/engine/install/';
+        const { family, id } = detectDistro();
+        const steps = dockerInstallSteps(family, id);
+        linuxHint = steps
+          ? `\nTo install Docker Engine, run "localctl setup --install-docker", or by hand:\n  ${steps.join('\n  ')}`
+          : '\nInstall Docker Engine for your distro: https://docs.docker.com/engine/install/';
       }
     }
     throw new Error(`No running container engine found. Start Docker Desktop, Podman, or Rancher Desktop and re-run.${linuxHint}`);
@@ -171,20 +257,15 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
   }
   useClusterContext(clusterName);
 
-  // Right after a (re)start the load balancer can accept connections before the API server is
-  // answering (EOF / connection refused), so wait for it before the first real kubectl call.
-  logger.step('Waiting for the Kubernetes API...');
-  // After an engine restart the server container can get a new IP while the load balancer
-  // (nginx, resolves upstreams only at startup) keeps the old one, so the API never answers.
-  // Restarting the load balancer once re-resolves it.
-  let lbRestarted = false;
-  for (let i = 0; i < 60; i += 1) {
-    if (capture('kubectl', ['get', '--raw', '/readyz']).status === 0) break;
-    if (i === 5 && !lbRestarted) {
-      lbRestarted = true;
-      run(engineBin, ['restart', `k3d-${clusterName}-serverlb`], { stdio: 'ignore', allowFail: true });
-    }
-    sleepSync(2000);
+  // Up to ~5 minutes: k3s can exit once during start-up (a known race between its cloud controller
+  // and RBAC bootstrap) and is restarted by the engine, which a 2-minute wait would not outlast on
+  // a slow machine. If it never answers, stop here with the reason instead of failing later on an
+  // unrelated "EOF" from kubectl apply.
+  if (!waitForClusterApi(engineBin, clusterName, { attempts: 150 })) {
+    throw new Error(
+      `The Kubernetes API of cluster '${clusterName}' did not become ready in 5 minutes. ` +
+      `See why with: ${engineBin} logs --tail 50 k3d-${clusterName}-server-0`,
+    );
   }
 
   const registryNetwork = `k3d-${clusterName}`;
@@ -209,7 +290,7 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
   // domain everywhere; only the namespace/subdomain prefix or the cluster differs).
   logger.step(`Setting up local TLS for *.${DOMAIN}...`);
   run('mkcert', ['-install']);
-  const certDir = path.join(os.homedir(), '.localctl', 'certs');
+  const certDir = CERTS_DIR;
   fs.mkdirSync(certDir, { recursive: true });
   const certFile = path.join(certDir, 'local-dev.pem');
   const keyFile = path.join(certDir, 'local-dev-key.pem');
@@ -226,15 +307,10 @@ function provisionCluster({ clusterName, httpPort, httpsPort, registryPort }) {
 
   // k3d's --wait only waits for node readiness, not for Traefik's helm-install job to finish
   // registering its CRDs, so applying TLSStore any earlier races and fails intermittently.
-  logger.step('Waiting for Traefik CRDs...');
-  for (let i = 0; i < 60; i += 1) {
-    if (capture('kubectl', ['get', 'crd', 'tlsstores.traefik.io']).status === 0) break;
-    sleepSync(2000);
-  }
-  run('kubectl', ['wait', '--for=condition=Established', 'crd/tlsstores.traefik.io', '--timeout=60s'], { stdio: 'ignore' });
-
-  run('kubectl', ['apply', '-f', path.join(MANIFESTS_DIR, 'tls-store.yaml')]);
-  run('kubectl', ['apply', '-f', path.join(MANIFESTS_DIR, 'namespace-addons.yaml')]);
+  waitForTraefikCrds();
+  applyWithRetry(path.join(MANIFESTS_DIR, 'tls-store.yaml'));
+  applyWithRetry(path.join(MANIFESTS_DIR, 'namespace-addons.yaml'));
+  waitForTraefik();
   logger.success('TLS configured, default cert wired into Traefik');
 }
 
@@ -267,4 +343,4 @@ function ensureClusterUp(clusterName, profileName) {
   useClusterContext(clusterName);
 }
 
-module.exports = { buildK3dConfig, provisionCluster, teardownCluster, clusterExists, registryNameFor, ensureClusterUp };
+module.exports = { buildK3dConfig, useClusterContext, waitForClusterApi, provisionCluster, teardownCluster, clusterExists, registryNameFor, ensureClusterUp };

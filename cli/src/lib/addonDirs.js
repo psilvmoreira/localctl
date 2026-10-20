@@ -1,6 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { HOME_STATE_DIR } = require('./paths');
 
 // Addons are searched in two places, in precedence order:
 //   1. USER_DIR   - yours, never touched by a `localctl` update/reinstall. Defaults to
@@ -11,7 +12,7 @@ const path = require('path');
 // This is what lets someone install this tool without inheriting its author's addon set, and
 // without forking the tool to add their own - see docs/adding-tools.md.
 const BUILTIN_DIR = path.join(__dirname, 'addons');
-const USER_DIR = process.env.LOCALCTL_ADDONS_DIR || path.join(os.homedir(), '.localctl', 'addons');
+const USER_DIR = process.env.LOCALCTL_ADDONS_DIR || path.join(HOME_STATE_DIR, 'addons');
 
 function roots(...segments) {
   return [path.join(USER_DIR, ...segments), path.join(BUILTIN_DIR, ...segments)];

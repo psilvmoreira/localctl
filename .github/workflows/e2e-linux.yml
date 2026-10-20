@@ -1,0 +1,67 @@
+name: e2e-linux
+
+# Runs the real end-to-end suite (cli/scripts/e2e) on GitHub's Linux runners: they are throwaway
+# machines with Docker, so the suite can build a cluster, deploy an app and tear it down without
+# anything of anyone's to protect. This is also where `localctl setup` itself is exercised, which
+# the suite deliberately does not do on a developer machine (it would touch the real local-dev).
+#
+# Linux support is experimental, so this runs when a PR targets `beta`, or by hand.
+on:
+  workflow_dispatch:
+    inputs:
+      addons:
+        description: "Also run the addon tests (downloads a Helm chart and image, ~12 min)"
+        type: boolean
+        default: false
+  pull_request:
+    branches: [beta]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: e2e (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cli/package-lock.json
+
+      - run: npm ci
+
+      # Downloads k3d, kubectl, tilt, mkcert and helm as release binaries, creates the default
+      # cluster on :80/:443, trusts the local CA and edits /etc/hosts (the runner has passwordless
+      # sudo). The suite below then stops that cluster, as it would on a developer machine.
+      - name: localctl setup
+        run: node bin/localctl.js setup
+
+      - name: localctl doctor
+        run: node bin/localctl.js doctor
+
+      - name: End-to-end suite
+        run: npm run test:e2e -- --yes ${{ inputs.addons != true && '--skip addons' || '' }}
+
+      - name: Upload report and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-report-${{ matrix.os }}
+          path: cli/.e2e-reports
+          retention-days: 14

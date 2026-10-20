@@ -1,4 +1,3 @@
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const { isRunning } = require('../lib/exec');
@@ -8,7 +7,7 @@ const { teardownInsecureRegistry } = require('../lib/podman');
 const { clearHosts } = require('../lib/hostsFile');
 const { listProfiles } = require('../lib/profileStore');
 const { confirm } = require('../lib/prompt');
-const { RUN_DIR, PROFILES_PATH } = require('../lib/paths');
+const { RUN_DIR, PROFILES_PATH, CERTS_DIR, APPS_REGISTRY_PATH } = require('../lib/paths');
 const logger = require('../lib/logger');
 
 // Every Main (cluster-isolation) project this machine knows about - each one owns a real,
@@ -80,8 +79,8 @@ async function uninstall(opts) {
     fs.rmSync(RUN_DIR, { recursive: true, force: true });
   }
 
-  const certsDir = path.join(os.homedir(), '.localctl', 'certs');
-  const appsRegistry = path.join(os.homedir(), '.localctl', 'apps.json');
+  const certsDir = CERTS_DIR;
+  const appsRegistry = APPS_REGISTRY_PATH;
   if (fs.existsSync(certsDir)) fs.rmSync(certsDir, { recursive: true, force: true });
   if (fs.existsSync(appsRegistry)) fs.rmSync(appsRegistry, { force: true });
   if (fs.existsSync(PROFILES_PATH)) fs.rmSync(PROFILES_PATH, { force: true });
