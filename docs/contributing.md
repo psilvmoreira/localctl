@@ -55,6 +55,52 @@ localctl app down
 To check generated Kubernetes YAML without deploying, run `localctl app generate-manifests` from
 an app directory.
 
+### End-to-end suite
+
+One command exercises the whole CLI against a real cluster:
+
+```sh
+cd cli
+npm run test:e2e
+```
+
+It is built to be safe to run on your working machine:
+
+1. **Isolated.** State, hosts file and kubeconfig live in a throwaway directory
+   (`LOCALCTL_HOME`, `LOCALCTL_HOSTS_FILE`, `KUBECONFIG`), so your `~/.localctl`, `/etc/hosts` and
+   `~/.kube` are never read or written. The test cluster is called `localctl-e2e`.
+2. **Your clusters are stopped, never deleted.** A second k3s cluster does not fit next to yours
+   on a small VM, so the suite records what is running (clusters, registries, background dev
+   loops and the apps in them), stops it with `k3d cluster stop` / `<engine> stop` (volumes and
+   deployments untouched) and shows you the list first. Use `--yes` to skip the question.
+3. **Cleans up after itself.** Only resources named `localctl-e2e*` are removed.
+4. **Asks before giving your machine back.** At the end it offers to start your clusters,
+   registries and apps again. Answer later with `npm run test:e2e -- --restore`.
+
+The result is printed as a report (passed / failed / skipped, with the error and the tail of the
+log for every failure) and written to `cli/.e2e-reports/<timestamp>/` as `report.md`,
+`report.json` and one log file per test (plus cluster diagnostics when something fails).
+
+| Option | Effect |
+|---|---|
+| `--yes` | don't ask before stopping your clusters |
+| `--offline-only` | only tests that need no cluster; stops nothing |
+| `--skip a,b` | skip groups (`cluster`, `app-lifecycle`, `projects`, `addons`, `heavy`, ...) |
+| `--only id,id` | run specific tests (see `--list`) |
+| `--with-heavy` | also run the Prometheus/Loki addon tests (several GB of memory) |
+| `--keep-cluster` | leave `localctl-e2e` up afterwards |
+| `--restore` / `--restore-after` | restore now / restore without asking at the end |
+| `--list` | list the tests |
+
+On GitHub the same suite runs on clean Ubuntu runners (`.github/workflows/e2e-linux.yml`, for PRs
+into `beta` or by hand). There nothing needs protecting, so that job also runs `localctl setup`,
+which the local run skips on purpose because it would touch your real `local-dev` cluster.
+
+Tests live in `cli/scripts/e2e/tests/`. Add one with `runner.add({ id, group, title, needs,
+run })`; `needs` skips the test (with the reason) when a test it relies on did not pass. It
+deliberately does not cover `localctl setup` (that is your own `local-dev` cluster) or
+`localctl uninstall` (destructive, machine-wide).
+
 ## Pull requests
 
 1. Create a branch from an up-to-date `master`.

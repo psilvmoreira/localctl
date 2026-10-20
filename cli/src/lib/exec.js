@@ -21,9 +21,12 @@ function capture(cmd, args, opts = {}) {
 }
 
 function commandExists(cmd) {
-  const probe = process.platform === 'win32' ? 'where' : 'which';
-  const res = spawnSync(probe, [cmd], { stdio: 'ignore' });
-  return res.status === 0;
+  if (process.platform === 'win32') {
+    return spawnSync('where', [cmd], { stdio: 'ignore' }).status === 0;
+  }
+  // `command -v` is a POSIX shell builtin; `which` is a separate program that minimal installs
+  // (Fedora/openSUSE server images, containers) don't ship.
+  return spawnSync('sh', ['-c', 'command -v "$0"', cmd], { stdio: 'ignore' }).status === 0;
 }
 
 // Blocking sleep with no native dependency - used for poll loops (e.g. waiting on a CRD to

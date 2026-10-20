@@ -34,3 +34,6 @@ cli/LICENSE
 *.tgz
 # semantic-release tarball output
 dist/
+
+# e2e suite output (reports, logs)
+cli/.e2e-reports/

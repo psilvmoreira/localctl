@@ -17,12 +17,17 @@ const FAMILY_BY_ID = [
 // Reads ID and ID_LIKE from os-release, so derivatives resolve to their parent (Mint, Pop!_OS ->
 // debian; Rocky, Alma -> rhel; Manjaro -> arch).
 function detectDistro() {
-  let release = '';
-  try {
-    release = fs.readFileSync('/etc/os-release', 'utf8');
-  } catch (e) {
-    return { id: 'unknown', family: 'unknown' };
+  let release = null;
+  // /usr/lib/os-release is the documented fallback when /etc/os-release is missing.
+  for (const file of ['/etc/os-release', '/usr/lib/os-release']) {
+    try {
+      release = fs.readFileSync(file, 'utf8');
+      break;
+    } catch (e) {
+      // try the next location
+    }
   }
+  if (release === null) return { id: 'unknown', family: 'unknown' };
   const value = (key) => {
     const m = release.match(new RegExp(`^${key}=(.*)$`, 'm'));
     return m ? m[1].replace(/"/g, '').trim() : '';
@@ -43,11 +48,21 @@ function isRoot() {
 
 // What `localctl setup --install-docker` would do, as printable steps. Shown in the "no engine"
 // error too, so the user can run them by hand. Returns null for families without a known recipe.
-function dockerInstallSteps(family) {
+function dockerInstallSteps(family, id) {
   const sudo = isRoot() ? '' : 'sudo ';
   const user = os.userInfo().username;
   let install;
-  if (family === 'debian' || family === 'rhel') {
+  if (family === 'rhel' && id !== 'fedora') {
+    // Docker's convenience script derives the repo path from the distro ID, and publishes
+    // .../linux/centos and .../linux/rhel but not .../linux/rocky or .../linux/almalinux: it adds
+    // a repo whose packages don't exist ("Unable to find a match: docker-ce"). The CentOS repo is
+    // what Docker documents for the RHEL rebuilds.
+    install = [
+      `${sudo}dnf -y install dnf-plugins-core`,
+      `${sudo}dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo`,
+      `${sudo}dnf -y install docker-ce docker-ce-cli containerd.io`,
+    ];
+  } else if (family === 'debian' || family === 'rhel') {
     install = [`curl -fsSL https://get.docker.com -o get-docker.sh && ${sudo}sh get-docker.sh`];
   } else if (family === 'arch') {
     install = [`${sudo}pacman -S --noconfirm docker`];
@@ -67,17 +82,18 @@ function dockerInstallSteps(family) {
 // ever runs on an explicit `--install-docker`.
 function installDocker() {
   const { family, id } = detectDistro();
-  if (!dockerInstallSteps(family)) {
+  if (!dockerInstallSteps(family, id)) {
     throw new Error(`No automatic Docker install for "${id}". Install Docker Engine for your distro (https://docs.docker.com/engine/install/) and re-run.`);
   }
-  if (!commandExists('curl') && (family === 'debian' || family === 'rhel')) {
+  const viaScript = family === 'debian' || (family === 'rhel' && id === 'fedora');
+  if (!commandExists('curl') && viaScript) {
     throw new Error('curl is needed to download the Docker install script. Install it and re-run.');
   }
   logger.step(`Installing Docker Engine (${id}). This needs sudo and will prompt for your password...`);
   const sudo = isRoot() ? [] : ['sudo'];
   const exec = (cmd, args) => run(sudo.length ? sudo[0] : cmd, sudo.length ? [cmd, ...args] : args);
 
-  if (family === 'debian' || family === 'rhel') {
+  if (viaScript) {
     const script = path.join(os.tmpdir(), 'localctl-get-docker.sh');
     run('curl', ['-fsSL', 'https://get.docker.com', '-o', script]);
     try {
@@ -85,6 +101,10 @@ function installDocker() {
     } finally {
       fs.rmSync(script, { force: true });
     }
+  } else if (family === 'rhel') {
+    exec('dnf', ['-y', 'install', 'dnf-plugins-core']);
+    exec('dnf', ['config-manager', '--add-repo', 'https://download.docker.com/linux/centos/docker-ce.repo']);
+    exec('dnf', ['-y', 'install', 'docker-ce', 'docker-ce-cli', 'containerd.io']);
   } else if (family === 'arch') {
     exec('pacman', ['-S', '--noconfirm', 'docker']);
   } else if (family === 'suse') {

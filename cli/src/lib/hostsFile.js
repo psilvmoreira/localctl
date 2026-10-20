@@ -8,8 +8,10 @@ const { DOMAIN } = require('./constants');
 
 const MARK_START = '# >>> localctl managed block >>>';
 const MARK_END = '# <<< localctl managed block <<<';
-const HOSTS_PATH =
-  process.platform === 'win32' ? 'C:\\Windows\\System32\\drivers\\etc\\hosts' : '/etc/hosts';
+// $LOCALCTL_HOSTS_FILE points it at another file - used by the e2e suite so tests never touch
+// (or need sudo for) the real hosts file.
+const HOSTS_PATH = process.env.LOCALCTL_HOSTS_FILE ||
+  (process.platform === 'win32' ? 'C:\\Windows\\System32\\drivers\\etc\\hosts' : '/etc/hosts');
 
 function registerApp(subdomain) {
   ensureHomeState();

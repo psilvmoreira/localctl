@@ -5,7 +5,10 @@ const fs = require('fs');
 const APP_DIR = process.cwd();
 const LOCAL_DIR = path.join(APP_DIR, '.local');
 const CONFIG_PATH = path.join(LOCAL_DIR, 'config.json');
-const HOME_STATE_DIR = path.join(os.homedir(), '.localctl');
+// $LOCALCTL_HOME relocates all machine-level state (profiles, apps, certs, run files). The e2e
+// suite uses it to run against a throwaway directory instead of your real ~/.localctl.
+const HOME_STATE_DIR = process.env.LOCALCTL_HOME || path.join(os.homedir(), '.localctl');
+const CERTS_DIR = path.join(HOME_STATE_DIR, 'certs');
 const APPS_REGISTRY_PATH = path.join(HOME_STATE_DIR, 'apps.json');
 const PROFILES_PATH = path.join(HOME_STATE_DIR, 'profiles.json');
 const RUN_DIR = path.join(HOME_STATE_DIR, 'run');
@@ -33,6 +36,7 @@ module.exports = {
   LOCAL_DIR,
   CONFIG_PATH,
   HOME_STATE_DIR,
+  CERTS_DIR,
   APPS_REGISTRY_PATH,
   PROFILES_PATH,
   RUN_DIR,
