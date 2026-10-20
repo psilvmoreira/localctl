@@ -89,12 +89,37 @@ log for every failure) and written to `cli/.e2e-reports/<timestamp>/` as `report
 | `--only id,id` | run specific tests (see `--list`) |
 | `--with-heavy` | also run the Prometheus/Loki addon tests (several GB of memory) |
 | `--keep-cluster` | leave `localctl-e2e` up afterwards |
+| `--keep-artifacts` | keep the throwaway state directory (hosts file, kubeconfig, app copies) |
 | `--restore` / `--restore-after` | restore now / restore without asking at the end |
 | `--list` | list the tests |
 
 On GitHub the same suite runs on clean Ubuntu runners (`.github/workflows/e2e-linux.yml`, for PRs
 into `beta` or by hand). There nothing needs protecting, so that job also runs `localctl setup`,
 which the local run skips on purpose because it would touch your real `local-dev` cluster.
+
+#### Across Linux distributions
+
+```sh
+cd cli
+npm run test:e2e:distros                  # all distributions, one after another
+npm run test:e2e:distros -- --distros arch,debian-12
+npm run test:e2e:distros -- --list
+```
+
+Each distribution runs in a privileged container on your Docker or Podman. Inside it the runner
+installs the prerequisites and Node.js, starts its own `dockerd`, then runs `localctl setup`,
+`localctl doctor` and this suite, so your own clusters are never touched. Distributions:
+`ubuntu-24.04`, `ubuntu-22.04`, `debian-12`, `fedora-41`, `rocky-9`, `opensuse-leap-15.6` and
+`arch` (the unofficial `agners/archlinuxarm` image on arm64).
+
+- Give the Podman or Docker VM at least **4 GB** of memory; a distribution takes several
+  minutes (Arch took 6 on an Apple-silicon Mac). Containers run as the same CPU architecture as your machine.
+- The output is a matrix (prerequisites, Node, dockerd, setup, doctor, tests) per distribution,
+  with logs under `cli/.e2e-reports/distros-<timestamp>/<distro>/`.
+- Docker image layers are cached in volumes named `localctl-e2e-docker-<distro>` so re-runs are
+  fast. `--prune-volumes` deletes them at the end.
+- `--addons` also runs the addon tests, `--timeout <min>` changes the per-distribution limit
+  (default 40). On macOS the run is kept awake with `caffeinate`.
 
 Tests live in `cli/scripts/e2e/tests/`. Add one with `runner.add({ id, group, title, needs,
 run })`; `needs` skips the test (with the reason) when a test it relies on did not pass. It

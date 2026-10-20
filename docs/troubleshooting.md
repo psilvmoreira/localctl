@@ -280,7 +280,9 @@ support](./architecture.md#multi-project-support)):
 
 ## Linux (experimental)
 
-Linux hasn't been through a full test cycle. These are the known rough edges:
+Linux is experimental: the end-to-end suite passes on Ubuntu, Debian, Fedora, Rocky, openSUSE and
+Arch in containers (arm64), but amd64 and bare-metal installs are untested. These are the known
+rough edges:
 
 **`No running container engine found`** - run `localctl setup --install-docker` (Debian, Red Hat,
 Arch and SUSE families), then log out and back in so your user is in the `docker` group. If Docker
@@ -302,3 +304,9 @@ there; re-running `localctl setup` re-creates it.
 
 **Firefox/Chromium still show a certificate warning** - install `certutil` (`sudo apt install
 libnss3-tools`, `sudo dnf install nss-tools`, `sudo pacman -S nss`), then run `mkcert -install`.
+
+**`The Kubernetes API of cluster '...' did not become ready in 5 minutes` / `Traefik did not become ready in 5 minutes`** - on a slow
+or low-memory machine k3s can take a few minutes to start. `localctl setup` waits up to 5 minutes
+for the API and for Traefik before giving up (Traefik's CRDs get the same wait). Check `<engine> logs --tail 50 k3d-<cluster>-server-0` (`docker` or `podman`)
+and `kubectl -n kube-system get pods`, make sure the engine has at least 3 GB of memory
+(`localctl doctor` warns below that), then re-run `localctl setup`: it resumes where it stopped.
