@@ -113,8 +113,9 @@ CA trust.
 
 ### Linux (experimental)
 
-Linux support is **experimental**: it hasn't been through a full test cycle (CI only runs the
-smoke tests there), and `setup`/`doctor` print a warning. It's published on the `beta` dist-tag:
+Linux support is **experimental**: the end-to-end suite passes on the distributions below, but
+only in containers on arm64 (amd64 and bare-metal installs are untested), and `setup`/`doctor`
+print a warning. It's published on the `beta` dist-tag:
 
 ```sh
 npm install -g @localctl/cli@beta
@@ -125,9 +126,14 @@ Targeted distributions, all with systemd and a mkcert-supported trust store:
 | Family | Distributions | Docker Engine install |
 |---|---|---|
 | Debian | Ubuntu, Debian, Linux Mint, Pop!_OS | `localctl setup --install-docker` (Docker's official script) |
-| Red Hat | Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream | `localctl setup --install-docker` (Docker's official script) |
+| Red Hat | Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream | `localctl setup --install-docker` (Docker's official script on Fedora, Docker's CentOS repository elsewhere) |
 | Arch | Arch, Manjaro, EndeavourOS | `localctl setup --install-docker` (`pacman`) |
 | SUSE | openSUSE Leap/Tumbleweed | `localctl setup --install-docker` (`zypper`) |
+
+Verified end to end (`npm run test:e2e:distros`, see [Contributing](docs/contributing.md)): Ubuntu
+22.04 and 24.04, Debian 12, Fedora 41, Rocky 9, openSUSE Leap 15.6 and Arch Linux ARM. Derivatives
+resolve through `ID_LIKE` in `/etc/os-release` (or `/usr/lib/os-release`) but were not run
+themselves.
 
 Other distributions (Alpine, Void, Gentoo, NixOS, immutable/atomic desktops) may work if you
 bring Docker (or Podman) and Node.js yourself, but aren't targeted. WSL needs the Windows hosts
