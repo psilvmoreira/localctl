@@ -301,6 +301,8 @@ tls: true
 This deploys `orders-api` at `https://orders.local.test`, with its own Postgres instance and the
 Node.js debugger on `localhost:9229`.
 
+Run `localctl app validate` to check the file (typos come with a "did you mean", and it also checks
+each entry of `environments`, the named overrides you select with `localctl app up --env <name>`).
 A [JSON Schema](https://github.com/psilvmoreira/localctl/blob/master/schema/app.schema.json) is
 available for editor autocomplete and validation. Full field reference:
 [**Config schema**](https://psilvmoreira.github.io/localctl/config-schema/).
