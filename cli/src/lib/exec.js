@@ -12,7 +12,9 @@ function run(cmd, args, opts = {}) {
 }
 
 function capture(cmd, args, opts = {}) {
-  const res = spawnSync(cmd, args, { encoding: 'utf8', ...opts });
+  // 64 MB instead of Node's 1 MiB default: kubectl output (a Secret list, all Ingresses) can be big,
+  // and hitting the limit would look like a failed command.
+  const res = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, ...opts });
   return {
     status: res.status,
     stdout: (res.stdout || '').trim(),

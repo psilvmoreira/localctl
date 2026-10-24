@@ -11,6 +11,8 @@ env:
   MONGO_HOST: "{{serviceHost}}"
   MONGO_PORT: "27017"
 
+resourcesPath: resources
+
 values: |
   auth:
     enabled: false

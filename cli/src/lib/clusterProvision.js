@@ -165,7 +165,16 @@ function ensureClusterUp(clusterName, profileName) {
     const fix = profileName === 'default' ? 'localctl setup' : `localctl profiles switch ${profileName}`;
     throw new Error(`No cluster running for project "${profileName}". Run "${fix}" to start it.`);
   }
-  run('kubectl', ['config', 'use-context', `k3d-${clusterName}`], { stdio: 'ignore' });
+  // Switching context rewrites the kubeconfig under a file lock, which makes parallel localctl runs
+  // fail at random. Skip it when this context is already the current one, and retry the rest.
+  const wanted = `k3d-${clusterName}`;
+  if (capture('kubectl', ['config', 'current-context']).stdout === wanted) return;
+  for (let attempt = 0; ; attempt += 1) {
+    const res = capture('kubectl', ['config', 'use-context', wanted]);
+    if (res.status === 0) return;
+    if (attempt >= 4) throw new Error(`Couldn't switch kubectl to ${wanted}: ${String(res.stderr || res.stdout).split('\n')[0].slice(0, 200)}`);
+    sleepSync(150 + Math.floor(Math.random() * 250));
+  }
 }
 
 module.exports = { provisionCluster, teardownCluster, clusterExists, registryNameFor, ensureClusterUp };

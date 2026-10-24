@@ -11,10 +11,11 @@ const MARK_END = '# <<< localctl managed block <<<';
 const HOSTS_PATH =
   process.platform === 'win32' ? 'C:\\Windows\\System32\\drivers\\etc\\hosts' : '/etc/hosts';
 
-function registerApp(subdomain) {
+// Records one or more subdomains with a single read and write of the registry.
+function registerApp(subdomains) {
   ensureHomeState();
   const registry = JSON.parse(fs.readFileSync(APPS_REGISTRY_PATH, 'utf8'));
-  registry[subdomain] = true;
+  for (const subdomain of [].concat(subdomains)) registry[subdomain] = true;
   fs.writeFileSync(APPS_REGISTRY_PATH, JSON.stringify(registry, null, 2));
 }
 
@@ -49,8 +50,10 @@ function writeHosts(next, current) {
     logger.success(`Updated ${HOSTS_PATH}`);
   } catch (e) {
     if (e.code !== 'EACCES' && e.code !== 'EPERM') throw e;
-    const tmp = path.join(os.tmpdir(), 'localctl-hosts-new');
-    fs.writeFileSync(tmp, next);
+    // Private directory: a fixed name in /tmp could be swapped by another user between this write
+    // and the `sudo cp` below.
+    const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'localctl-hosts-')), 'hosts');
+    fs.writeFileSync(tmp, next, { flag: 'wx', mode: 0o600 });
     if (process.platform === 'win32') {
       logger.warn('Need Administrator rights to update the hosts file. Approve the Windows prompt to continue.');
       if (copyElevatedWindows(tmp) && fs.readFileSync(HOSTS_PATH, 'utf8') === next) {

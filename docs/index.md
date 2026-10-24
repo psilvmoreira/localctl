@@ -36,11 +36,11 @@ file per app.
     A locally-trusted wildcard certificate from `mkcert`, wired into the ingress for you. Green
     padlock, no browser warnings.
 
--   :material-file-code:{ .lg .middle } __Config, not YAML__
+-   :material-file-code:{ .lg .middle } __Config, not manifests__
 
     ---
 
-    Each app has one `.local/config.json`. Every Kubernetes manifest is generated from it.
+    Each app has one `.local/config.yaml`. Every Kubernetes manifest is generated from it.
 
 -   :material-sync:{ .lg .middle } __Fast inner loop__
 
@@ -67,7 +67,7 @@ file per app.
 
     ---
 
-    `localctl app secrets set` stores API keys as Kubernetes Secrets. `config.json` only ever
+    `localctl app secrets set` stores API keys as Kubernetes Secrets. `config.yaml` only ever
     holds the key name.
 
 -   :material-source-branch:{ .lg .middle } __Multi-project when you need it__
@@ -83,7 +83,7 @@ file per app.
 
 ```mermaid
 flowchart LR
-  A[".local/config.json<br/>(your app repo)"] --> B["localctl<br/>validates + generates"]
+  A[".local/config.yaml<br/>(your app repo)"] --> B["localctl<br/>validates + generates"]
   B --> C["Kubernetes manifests<br/>(never hand-written)"]
   C --> D["Tilt<br/>build, push, live-sync"]
   D --> E["k3d cluster<br/>Traefik + registry + TLS"]
@@ -151,7 +151,7 @@ handles the build, push and live-sync loop. Full breakdown in [Architecture](arc
 
     ---
 
-    Every `.local/config.json` field: secrets, probes, sidecars, dependencies.
+    Every `.local/config.yaml` field: secrets, probes, sidecars, dependencies.
 
 -   :material-sitemap:{ .lg .middle } __[Architecture](architecture.md)__
 

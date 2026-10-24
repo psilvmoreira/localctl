@@ -3,6 +3,7 @@ const { loadConfig } = require('../lib/loadConfig');
 const { run, isRunning, sleepSync } = require('../lib/exec');
 const { ensureClusterUp } = require('../lib/clusterProvision');
 const { runFiles } = require('../lib/paths');
+const { assertNamespaceOwnership } = require('../lib/namespaces');
 const logger = require('../lib/logger');
 
 module.exports = (program) => {
@@ -12,6 +13,7 @@ module.exports = (program) => {
     .action(() => {
       const cfg = loadConfig();
       ensureClusterUp(cfg.clusterName, cfg.profile);
+      assertNamespaceOwnership(cfg);
       const { pidFile, portFile, logFile } = runFiles(cfg.name);
 
       // If `localctl up` started a detached Tilt process for this app, it needs to be stopped
@@ -19,7 +21,7 @@ module.exports = (program) => {
       // about to delete out from under it.
       if (fs.existsSync(pidFile)) {
         const pid = parseInt(fs.readFileSync(pidFile, 'utf8'), 10);
-        if (Number.isFinite(pid) && isRunning(pid)) {
+        if (Number.isInteger(pid) && pid > 1 && isRunning(pid)) {
           logger.step(`Stopping background Tilt process (pid ${pid})...`);
           process.kill(pid, 'SIGTERM');
           for (let i = 0; i < 20 && isRunning(pid); i += 1) sleepSync(250);

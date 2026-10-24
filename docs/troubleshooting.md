@@ -24,11 +24,11 @@ you set `probes.readiness`/`.liveness` (see [Config Schema](./config-schema.md#p
 app takes longer than the default `initialDelaySeconds` (3s readiness / 10s liveness) to start
 accepting connections - a slow framework boot, a migration running first - the liveness probe can
 kill it before it's actually up. Raise `initialDelaySeconds` for the slow one in
-`.local/config.json`, no code change needed.
+`.local/config.yaml`, no code change needed.
 
 ## `localctl app up` fails with "Missing secret value for: X"
 
-`.local/config.json`'s `secrets` array declares names only - the value has to be set separately,
+`.local/config.yaml`'s `secrets` array declares names only - the value has to be set separately,
 once, with `localctl app secrets set X` (prompts for it, hidden, if you don't pass it inline). This
 is deliberate: it's the same never-plaintext principle addon-generated credentials already follow,
 just for values you supply yourself. `localctl app secrets list` shows which declared keys still
@@ -201,8 +201,8 @@ still hit this:
 
 ## Forcing an immediate rebuild/redeploy
 
-Tilt tracks `.local/config.json` as a Tiltfile input (via `read_json`) and auto-reloads on changes
-to it, same as any other watched file — you don't need to do anything, this is verified working.
+The generated Tiltfile watches `.local/config.yaml` (`watch_file`) and Tilt re-runs it when the
+file changes, so you normally don't need to do anything.
 If you still want to force a rebuild/redeploy right now, without waiting on any file change (e.g.
 to bounce a hung process, or just to be sure):
 

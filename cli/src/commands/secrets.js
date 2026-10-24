@@ -10,12 +10,12 @@ module.exports = (program) => {
 
   secrets
     .command('set <key> [value]')
-    .description('Set a secret value (prompts, hidden, if not given) - stored as a real k8s Secret, never in .local/config.json')
+    .description('Set a secret value (prompts, hidden, if not given) - stored as a real k8s Secret, never in .local/config.yaml')
     .action(async (key, value) => {
       const cfg = loadConfig();
       ensureClusterUp(cfg.clusterName, cfg.profile);
       if (!cfg.secrets.includes(key)) {
-        logger.warn(`"${key}" isn't listed in .local/config.json's "secrets" array - it won't be injected into the app until you add it there too.`);
+        logger.warn(`"${key}" isn't listed in .local/config.yaml's "secrets" array - it won't be injected into the app until you add it there too.`);
       }
       const finalValue = value || (await promptHidden(`Value for ${key}`));
       if (!finalValue) throw new Error('No value given.');
@@ -48,7 +48,7 @@ module.exports = (program) => {
       const rows = [...new Set([...cfg.secrets, ...set])].map((key) => [
         key,
         set.has(key) ? ui.ok('set') : ui.warn('missing'),
-        cfg.secrets.includes(key) ? '' : ui.dim('(not in config.json)'),
+        cfg.secrets.includes(key) ? '' : ui.dim('(not in config.yaml)'),
       ]);
       ui.printTable(['KEY', 'STATUS', ''], rows);
     });

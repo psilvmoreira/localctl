@@ -6,6 +6,8 @@ const { detectEngine } = require('../lib/engine');
 const { ensureClusterUp } = require('../lib/clusterProvision');
 const { portsFor } = require('../lib/profileStore');
 const { listKeys } = require('../lib/appSecrets');
+const { assertNamespaceOwnership } = require('../lib/namespaces');
+const { assertHostsFree } = require('../lib/hostGuard');
 const { runFiles } = require('../lib/paths');
 const { DOMAIN, DEFAULT_HTTPS_PORT } = require('../lib/constants');
 const ui = require('../lib/ui');
@@ -29,6 +31,7 @@ function printEndpoints(cfg) {
   const url = `https://${cfg.subdomain}.${DOMAIN}${suffix}`;
   console.log('');
   console.log(`${ui.check} ${ui.bold(cfg.name)} -> ${ui.url(url)}`);
+  cfg.hosts.slice(1).forEach((host) => console.log(`  also:   ${ui.url(`https://${host}.${DOMAIN}${suffix}`)}`));
   if (cfg.debug.enabled && cfg.debug.port) {
     console.log(`  debug:  localhost:${cfg.debug.port}`);
   }
@@ -47,10 +50,15 @@ module.exports = (program) => {
   program
     .command('up')
     .option('-f, --foreground', 'run in the foreground with the interactive Tilt UI (default: detached, survives closing this terminal)')
+    .option('-e, --env <name>', 'apply an entry of "environments" from .local/config.yaml over the base config')
     .description('Deploy/dev-loop the app in the current directory')
     .action(async (opts) => {
+      // Tilt (and the localctl calls in the Tiltfile) inherit this, so every step sees the same config.
+      if (opts.env) process.env.LOCALCTL_ENV = opts.env;
       const cfg = loadConfig();
       ensureClusterUp(cfg.clusterName, cfg.profile);
+      assertNamespaceOwnership(cfg);
+      assertHostsFree(cfg);
 
       if (cfg.secrets.length > 0) {
         const set = new Set(listKeys(cfg));
@@ -64,7 +72,7 @@ module.exports = (program) => {
         }
       }
 
-      registerApp(cfg.subdomain);
+      registerApp(cfg.hosts);
       syncHosts();
       const env = podmanBuildEnv();
 

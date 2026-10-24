@@ -4,6 +4,7 @@ const { run, capture } = require('../lib/exec');
 const { getList } = require('../lib/workloadReadiness');
 const { confirm } = require('../lib/prompt');
 const logger = require('../lib/logger');
+const { assertNamespaceOwnership } = require('../lib/namespaces');
 
 module.exports = (program) => {
   program
@@ -13,6 +14,7 @@ module.exports = (program) => {
     .action(async (opts) => {
       const cfg = loadConfig();
       ensureClusterUp(cfg.clusterName, cfg.profile);
+      assertNamespaceOwnership(cfg);
 
       if (capture('kubectl', ['get', 'deployment', cfg.name, '-n', cfg.namespace]).status === 0) {
         throw new Error(`"${cfg.name}" is still deployed - run "localctl app down" first, then "localctl app prune" to also wipe its data.`);
@@ -43,6 +45,8 @@ module.exports = (program) => {
         }
       }
 
+      // The prompt can take a while; make sure the namespace is still ours before deleting it.
+      assertNamespaceOwnership(cfg);
       run('kubectl', ['delete', 'namespace', cfg.namespace]);
       logger.success(`Namespace "${cfg.namespace}" and everything in it deleted.`);
     });

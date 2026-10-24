@@ -99,10 +99,10 @@ localctl app new
 
 This asks for an app name and port, then writes:
 
-- `.local/config.json` — the app's infra configuration (see [Config Schema](./config-schema.md))
-- `Tiltfile` — a generic file that reads `.local/config.json`; you usually don't need to touch it
+- `.local/config.yaml` — the app's infra configuration (see [Config Schema](./config-schema.md))
+- `Tiltfile` — a generic file that reads `.local/config.yaml`; you usually don't need to touch it
 
-Edit `.local/config.json` to fit your app: environment variables, database dependencies, debug
+Edit `.local/config.yaml` to fit your app: environment variables, database dependencies, debug
 settings, live-sync paths, your own secrets, readiness/liveness overrides — full reference:
 [Config Schema](./config-schema.md). See `examples/node-app`, `examples/python-app`, and
 `examples/dotnet-api` for filled-out examples.
@@ -120,7 +120,7 @@ if it stays that way).
 localctl app up
 ```
 
-If `.local/config.json` declares any `secrets`, `localctl app up` refuses to deploy until every one
+If `.local/config.yaml` declares any `secrets`, `localctl app up` refuses to deploy until every one
 of them has a value set (`localctl app secrets set <KEY>` — see [Config
 Schema](./config-schema.md#secrets)), rather than deploying a pod that would just fail to start.
 
@@ -162,7 +162,7 @@ Node (see `examples/node-app/Dockerfile`), `uvicorn --reload`/`flask run --debug
 "live-sync" just quietly does nothing until you restart `localctl app up`.
 
 Visit `https://<subdomain>.local.test` (the `<subdomain>` is whatever you set in
-`.local/config.json`, defaulting to the app name).
+`.local/config.yaml`, defaulting to the app name).
 
 ## 4. Tear down
 
@@ -188,7 +188,7 @@ cluster) whether switching to it should tear down other projects' clusters or ru
 and which cluster-wide addons to enable. It registers the project and writes
 `.local/project.json` in the current directory, marking every app under it as belonging to
 `staging` from now on — `localctl app up`/`down`/`status` run from anywhere under that folder
-resolve to it automatically, the same way `.local/config.json` resolution already worked, just one
+resolve to it automatically, the same way `.local/config.yaml` resolution already worked, just one
 level up (see [Architecture — Multi-project support](./architecture.md#multi-project-support)).
 
 ```
@@ -203,6 +203,6 @@ project is currently active — switch to the one you mean first.
 ## Next steps
 
 - [CLI commands](cli-reference.md): every command and option.
-- [Config schema](config-schema.md): every `.local/config.json` field.
+- [Config schema](config-schema.md): every `.local/config.yaml` field.
 - [Debugging](debugging.md): attach a debugger in Node, Python, Go, Java or .NET.
 - [Troubleshooting](troubleshooting.md): known issues, with cause and fix.

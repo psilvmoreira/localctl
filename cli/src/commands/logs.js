@@ -12,6 +12,7 @@ module.exports = (program) => {
     .option('-f, --follow', 'follow log output')
     .description('Tail logs for a deployed app - run inside the app\'s repo to resolve it (and its project\'s namespace prefix) automatically, or pass a name')
     .action((name, opts) => {
+      if (name !== undefined && !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(name)) throw new Error(`"${name}" is not a valid app name.`);
       let targetName = name;
       let namespace = opts.namespace;
 

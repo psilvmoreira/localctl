@@ -4,7 +4,7 @@ const path = require('path');
 // Same lookup shape as git finding .git, or Claude finding .claude: walk up from a directory
 // looking for the nearest `.local/project.json`, at that directory or any ancestor. This lets a
 // single project.json at a parent folder govern every app subfolder underneath it, or a single
-// `.local` folder hold both the project.json and an app's own config.json together - whichever
+// `.local` folder hold both the project.json and an app's own config.yaml together - whichever
 // layout a given repo uses.
 function findProjectFile(startDir) {
   let dir = startDir;
@@ -19,7 +19,7 @@ function findProjectFile(startDir) {
 
 // Which profile governs `startDir` - the name from the nearest ancestor's project.json, or
 // "default" if none exists anywhere above it. This is independent of app config resolution
-// (CONFIG_PATH is always just cwd's own .local/config.json) - only the profile/cluster scope
+// (CONFIG_PATH is always just cwd's own .local/config.yaml) - only the profile/cluster scope
 // walks up.
 function resolveProfileName(startDir = process.cwd()) {
   const file = findProjectFile(startDir);

@@ -19,6 +19,8 @@ envFromSecret:
     secret: "{{secretName}}"
     key: password
 
+resourcesPath: master.resources
+
 values: |
   architecture: standalone
   auth:
