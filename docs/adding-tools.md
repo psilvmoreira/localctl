@@ -72,6 +72,11 @@ envFromSecret:
     secret: "{{secretName}}"
     key: password
 
+# Where in the chart's values an app's `dependencies[].resources` (cpu/memory) are written, as a
+# dotted path. Charts differ (postgres: primary.resources, redis: master.resources, mongo:
+# resources). Without it, an app that sets `resources` on this dependency gets a clear error.
+resourcesPath: primary.resources
+
 # Set to `true` if this addon has a config/ folder (see below).
 config: false
 
@@ -93,7 +98,7 @@ Available inside `values`, `env`, and `envFromSecret`:
 |---|---|
 | `{{release}}` | `<appName>-<addonFolderName>` for a per-app addon, or just the addon's folder name for a cluster-wide one |
 | `{{namespace}}` | The app's namespace (per-app) or `observability` (cluster-wide) |
-| `{{database}}`, `{{storage}}` | The matching fields from the app's `.local/config.json` dependency entry (`dependencies: [{ "type": "postgres", "database": "...", "storage": "..." }]`), with sensible fallback defaults |
+| `{{database}}`, `{{storage}}` | The matching fields from the app's `.local/config.yaml` dependency entry (`dependencies: [{ "type": "postgres", "database": "...", "storage": "..." }]`), with sensible fallback defaults |
 | `{{secretName}}` | Only if `secrets:` is set — the generated Secret's real name |
 | `{{configMapName}}` | Only if `config: true` and a `config/` folder exists — the generated ConfigMap's real name |
 | `{{serviceHost}}` | The actual Service the chart created, **read back out of its own rendered output** — not predicted from a naming convention, since every chart names its Service differently (Bitnami's PostgreSQL chart uses `<release>-postgresql`; its Redis chart uses `<release>-master` with no chart name at all when the release name already contains "redis") |
@@ -145,9 +150,11 @@ like this before assuming a single field is enough).
    it takes an existing secret (if it needs a password) and its persistence size field.
 3. Create `~/.localctl/addons/kafka/addon.yaml` following the reference above — your own addons
    dir, not the CLI's built-in one (see [Where addons live](#where-addons-live)).
-4. Use it in any app's `.local/config.json`:
-   ```json
-   "dependencies": [{ "type": "kafka", "version": "..." }]
+4. Use it in any app's `.local/config.yaml`:
+   ```yaml
+   dependencies:
+     - type: kafka
+       version: "<version>"
    ```
 
 That's it — no registration step, no JS, no schema file to edit. `localctl app generate-manifests`

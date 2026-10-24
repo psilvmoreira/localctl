@@ -24,22 +24,18 @@ function ensureRepo(url) {
 
 function substitute(template, vars) {
   return String(template).replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, key) => {
-    if (!(key in vars)) throw new Error(`Addon references unknown template variable "{{${key}}}"`);
+    if (!Object.prototype.hasOwnProperty.call(vars, key)) throw new Error(`Addon references unknown template variable "{{${key}}}"`);
     return vars[key];
   });
 }
 
-function ensureNamespace(ns) {
-  if (capture('kubectl', ['get', 'namespace', ns]).status !== 0) {
-    run('kubectl', ['create', 'namespace', ns], { stdio: 'ignore', allowFail: true });
-  }
-}
+const { ensureManagedNamespace: ensureNamespace } = require('./namespaces');
 
 // Generates each secret's value once and stores it as a real k8s Secret; a re-run that finds the
 // Secret already there leaves it alone, so app data doesn't lose its password out from under it
 // on every `localctl up`.
-function ensureSecret(name, namespace, keys) {
-  ensureNamespace(namespace);
+function ensureSecret(name, namespace, keys, owner) {
+  ensureNamespace(namespace, owner);
   if (capture('kubectl', ['get', 'secret', name, '-n', namespace]).status === 0) return;
   const args = ['create', 'secret', 'generic', name, '-n', namespace];
   for (const key of keys) {
@@ -50,8 +46,8 @@ function ensureSecret(name, namespace, keys) {
 
 // Turns a folder of literal files (dashboards, datasource definitions, init scripts - whatever
 // the chart expects to mount, not a Helm value) into a real ConfigMap.
-function ensureConfigMap(name, namespace, configDir) {
-  ensureNamespace(namespace);
+function ensureConfigMap(name, namespace, configDir, owner) {
+  ensureNamespace(namespace, owner);
   const files = fs.readdirSync(configDir).filter((f) => fs.statSync(path.join(configDir, f)).isFile());
   const args = ['create', 'configmap', name, '-n', namespace, '--dry-run=client', '-o', 'yaml'];
   files.forEach((f) => args.push(`--from-file=${path.join(configDir, f)}`));
@@ -62,8 +58,10 @@ function ensureConfigMap(name, namespace, configDir) {
 
 function helmTemplate(release, chart, valuesObj, namespace) {
   const repoName = ensureRepo(chart.repo);
-  const tmpValues = path.join(os.tmpdir(), `localctl-addon-values-${process.pid}-${Date.now()}.yaml`);
-  fs.writeFileSync(tmpValues, yaml.dump(valuesObj));
+  // A private directory (mode 0700): a predictable file name in /tmp could be swapped by another user.
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'localctl-addon-'));
+  const tmpValues = path.join(tmpDir, 'values.yaml');
+  fs.writeFileSync(tmpValues, yaml.dump(valuesObj), { flag: 'wx', mode: 0o600 });
   try {
     // --no-hooks: excludes `helm test` pods and similar hook resources from the rendered output -
     // we apply this YAML with plain `kubectl apply`, not `helm install`, so nothing would ever
@@ -76,7 +74,7 @@ function helmTemplate(release, chart, valuesObj, namespace) {
     }
     return res.stdout;
   } finally {
-    fs.rmSync(tmpValues, { force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 }
 
@@ -129,9 +127,31 @@ function buildAddonRecord({ release, namespace, addonName, chart, owner }) {
   };
 }
 
+// Writes a dependency's `resources:` into the chart values at the addon's `resourcesPath` (a dotted
+// path such as `primary.resources`). Set as an object, never through text substitution, so the
+// values can't change the YAML structure around them.
+function applyResources(valuesObj, resourcesPath, resources, addonName) {
+  if (!resourcesPath) {
+    throw new Error(
+      `The "${addonName}" addon can't take "resources" yet: its addon.yaml has no "resourcesPath" ` +
+      '(where the chart keeps its resources, e.g. primary.resources). See docs/adding-tools.md.',
+    );
+  }
+  const keys = resourcesPath.split('.');
+  if (keys.some((k) => ['__proto__', 'constructor', 'prototype'].includes(k))) {
+    throw new Error(`Invalid resourcesPath "${resourcesPath}" in the ${addonName} addon.`);
+  }
+  let node = valuesObj;
+  for (const key of keys.slice(0, -1)) {
+    if (typeof node[key] !== 'object' || node[key] === null) node[key] = {};
+    node = node[key];
+  }
+  node[keys[keys.length - 1]] = JSON.parse(JSON.stringify(resources));
+}
+
 // Loads one addon (given its folder) and returns the rendered manifest YAML, plus any env vars
 // it wants injected into the caller's own container (per-app addons only - see manifestGen.js).
-function loadAddon(addonDir, { release, namespace, addonName, owner, extraVars = {}, chartVersionOverride }) {
+function loadAddon(addonDir, { release, namespace, addonName, owner, extraVars = {}, chartVersionOverride, resources }) {
   const specPath = path.join(addonDir, 'addon.yaml');
   const spec = yaml.load(fs.readFileSync(specPath, 'utf8'));
 
@@ -140,19 +160,20 @@ function loadAddon(addonDir, { release, namespace, addonName, owner, extraVars =
 
   if (spec.secrets) {
     const secretName = `${release}-secret`;
-    ensureSecret(secretName, namespace, Object.keys(spec.secrets));
+    ensureSecret(secretName, namespace, Object.keys(spec.secrets), owner);
     vars.secretName = secretName;
   }
 
   const configDir = path.join(addonDir, 'config');
   if (spec.config && fs.existsSync(configDir)) {
     const configMapName = `${release}-config`;
-    ensureConfigMap(configMapName, namespace, configDir);
+    ensureConfigMap(configMapName, namespace, configDir, owner);
     vars.configMapName = configMapName;
   }
 
   const valuesYaml = substitute(spec.values, vars);
   const valuesObj = yaml.load(valuesYaml) || {};
+  if (resources) applyResources(valuesObj, spec.resourcesPath, resources, addonName || path.basename(addonDir));
   const manifestYaml = helmTemplate(release, chart, valuesObj, namespace);
   vars.serviceHost = findServiceHost(manifestYaml);
   const servicePort = findServicePort(manifestYaml);
@@ -187,4 +208,4 @@ function loadAddon(addonDir, { release, namespace, addonName, owner, extraVars =
   return { manifestYaml: fullManifestYaml, env, envFromSecret, connect };
 }
 
-module.exports = { loadAddon, substitute };
+module.exports = { loadAddon, substitute, applyResources };

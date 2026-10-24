@@ -7,7 +7,7 @@ description: Every localctl command, its options, and what it does.
 Every command prints its own options with `--help`, for example `localctl app up --help`.
 
 Commands under `app` act on the app in the current directory, described by its
-`.local/config.json`. Run them from the app's repository root. Everything else acts on the
+`.local/config.yaml`. Run them from the app's repository root. Everything else acts on the
 [active project](getting-started.md#5-more-than-one-project).
 
 ## Machine setup
@@ -28,8 +28,9 @@ Commands under `app` act on the app in the current directory, described by its
 
 | Command | Description |
 |---|---|
-| `localctl app new` | Scaffold `.local/config.json` and a `Tiltfile` in the current repository. |
+| `localctl app new` | Scaffold `.local/config.yaml` and a `Tiltfile` in the current repository. |
 | `localctl app up` | Build, deploy and live-reload the app. Runs in the background and survives closing the terminal. |
+| `localctl app up --env <name>` | Same as `app up`, applying one entry of `environments` from `.local/config.yaml` over the base config. |
 | `localctl app down` | Stop the dev loop and remove the app from the cluster. Keeps its data (database volumes, secrets). |
 | `localctl app reload` | Force a rebuild and redeploy without waiting for a file change. |
 | `localctl app status` | Inside an app repo: that app's readiness, URL, debug port, dependencies and dev-loop state. Elsewhere: a table of every app. |
@@ -39,6 +40,7 @@ Commands under `app` act on the app in the current directory, described by its
 
 | Option | Command | Description |
 |---|---|---|
+| `-e`, `--env <name>` | `app up` | Apply one entry of `environments` from the config over the base settings. |
 | `-f`, `--foreground` | `app up` | Run in the foreground with the interactive Tilt UI. ++ctrl+c++ stops the app. |
 | `-a`, `--app <name>` | `app status`, `app reload` | Act on one app by name, from any directory. |
 | `-A`, `--all` | `app status` | Show the table of every app, even from inside an app repo. |
@@ -49,7 +51,7 @@ Commands under `app` act on the app in the current directory, described by its
 ### Secrets
 
 The app's own secrets (API keys, tokens). Values are stored as Kubernetes Secrets, never in
-`.local/config.json`. See [Config schema: secrets](config-schema.md#secrets).
+`.local/config.yaml`. See [Config schema: secrets](config-schema.md#secrets).
 
 | Command | Description |
 |---|---|
@@ -89,6 +91,8 @@ debugging what gets deployed.
 
 | Command | Description |
 |---|---|
+| `localctl app validate` | Check `.local/config.yaml`, each environment and the `envFile` (unknown fields with "did you mean", wrong types, bad values) without touching the cluster. |
+| `localctl app tilt-config` | Print the resolved build, sync and port settings as JSON. Used by the generated Tiltfile. |
 | `localctl app generate-manifests` | Print the Kubernetes manifests generated for the current app. |
 | `localctl app registry-info` | Print the app's image registry push and pull addresses as JSON. |
 | `localctl hosts clear` | Remove the whole managed `*.local.test` block from the hosts file. Used by `uninstall`. |

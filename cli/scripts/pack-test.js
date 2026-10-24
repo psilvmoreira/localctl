@@ -42,7 +42,9 @@ const REQUIRED_FILES = [
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'localctl-pack-'));
 try {
   const out = npm(['pack', '--json', '--pack-destination', work], { cwd: CLI_DIR });
-  const [info] = JSON.parse(out.slice(out.indexOf('[')));
+  // npm prints prepack output before the JSON; older npm gives a list, newer a map keyed by package.
+  const parsed = JSON.parse(out.slice(out.search(/^[[{]/m)));
+  const info = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
   const packed = new Set(info.files.map((f) => f.path));
 
   const missing = REQUIRED_FILES.filter((f) => !packed.has(f));

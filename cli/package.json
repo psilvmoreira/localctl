@@ -35,7 +35,7 @@
   "scripts": {
     "sync-assets": "node scripts/sync-assets.js",
     "prepack": "node scripts/sync-assets.js",
-    "test": "node scripts/smoke-test.js",
+    "test": "node scripts/smoke-test.js && node scripts/schema-check.js && node --test test/config.test.js",
     "test:pack": "node scripts/pack-test.js"
   },
   "dependencies": {

@@ -8,7 +8,7 @@ support](#multi-project-support) for how more than one of these coexists):
 ```mermaid
 flowchart TB
     Dev["Developer machine<br/>*.local.test :80/:443<br/>(hosts file → 127.0.0.1)"]
-    ConfigJSON["app repo<br/>.local/config.json + Tiltfile"]
+    ConfigYAML["app repo<br/>.local/config.yaml + Tiltfile"]
     Tilt["Tilt (dev loop)<br/>build image, push, live-sync, redeploy"]
 
     subgraph Cluster["k3d cluster (e.g. local-dev)"]
@@ -36,7 +36,7 @@ flowchart TB
         end
     end
 
-    ConfigJSON --> Tilt
+    ConfigYAML --> Tilt
     Tilt -- "docker build + push" --> Registry
     Tilt -- "kubectl apply<br/>(generate-manifests)" --> AppNS
     Registry -.-> Deploy
@@ -70,7 +70,7 @@ flowchart TB
   into the running container for the paths you list under `"sync"`, skipping a full
   rebuild/redeploy for fast iteration. It also owns port-forwarding, including debug ports.
 - **localctl** (Node.js CLI, this repo's `cli/`): the single source of truth for both turning
-  `.local/config.json` into Kubernetes manifests, and for infra lifecycle itself. The Tiltfile in
+  `.local/config.yaml` into Kubernetes manifests, and for infra lifecycle itself. The Tiltfile in
   every app repo is a thin, generic wrapper that just calls `localctl app generate-manifests` — all the
   actual logic (validation, templating, addon composition) lives here, so you never hand-edit
   Kubernetes YAML in an app repo. `localctl setup` and `localctl uninstall` similarly hold all
@@ -92,8 +92,8 @@ flowchart TB
   Tilt's fixed default port, with an error that gives no hint why. You're not meant to need that
   port directly; `localctl app status`/`logs` are the supported way to check on an app. The one place
   it's used explicitly is `localctl app reload`, which reads it to run `tilt trigger --port <n> <app>`
-  — Tilt already auto-reloads on file changes (including `.local/config.json`, tracked via
-  `read_json`), so `reload` exists for the separate case of wanting to force a rebuild/redeploy
+  — Tilt already auto-reloads on file changes (including `.local/config.yaml`, watched via
+  `watch_file`), so `reload` exists for the separate case of wanting to force a rebuild/redeploy
   right now, with no change involved.
 
 ## Dev inner loop: `localctl app up` to a running pod
@@ -206,7 +206,7 @@ See [Troubleshooting](./troubleshooting.md) if either of these needs to be re-di
 
 ## Per-app vs. cluster-wide, and how addons actually work
 
-- **Per-app dependencies** (`postgres`, `redis`, `mongo` in `.local/config.json`) are deployed
+- **Per-app dependencies** (`postgres`, `redis`, `mongo` in `.local/config.yaml`) are deployed
   into the app's own namespace, one instance per app. Simple, isolated, disposable with
   `localctl app down`.
 - **Cluster-wide addons** (currently: `logging`, `monitoring`) are shared infrastructure you turn
@@ -242,16 +242,16 @@ renders a Service gets it for free.
 
 **Readiness/liveness**: every app gets a `readinessProbe`/`livenessProbe` on its main container
 (`buildProbe()` in `manifestGen.js`) - a plain TCP check on `port` unless `probes.readiness`/
-`.liveness` in `.local/config.json` sets a `path` (switches that one to an HTTP GET). Without this,
+`.liveness` in `.local/config.yaml` sets a `path` (switches that one to an HTTP GET). Without this,
 `kubectl rollout status` succeeding only ever meant "the process started," never "it's actually
 serving" - see [Config Schema](./config-schema.md#probes).
 
 **App-level secrets** (`localctl app secrets set/unset/list/show`, `cli/src/lib/appSecrets.js`)
 follow the same never-plaintext principle as addon-generated credentials, but for values *you*
-supply (an API key) rather than ones generated for you (a DB password): `.local/config.json`'s
+supply (an API key) rather than ones generated for you (a DB password): `.local/config.yaml`'s
 `secrets` array holds names only, `app secrets set` stores the actual value once as a real k8s
 Secret (`<app>-secrets`), and `generateManifests()` wires each declared name to it via
-`secretKeyRef` - the value never touches `.local/config.json`, a Helm value, or a plaintext env var.
+`secretKeyRef` - the value never touches `.local/config.yaml`, a Helm value, or a plaintext env var.
 `localctl app up` checks every declared key actually has a value before deploying, rather than
 letting the pod fail to start with a raw `CreateContainerConfigError`.
 
@@ -316,9 +316,9 @@ and brings the other up, unless `staging` was created with `exclusive: false`.
 **Which project governs a directory** is resolved by walking up from it looking for the nearest
 `.local/project.json` (`{"profile": "<name>"}`) - the same lookup shape as git finding `.git`, or
 Claude finding `.claude` (`cli/src/lib/projectContext.js`). This is independent of, and layered on
-top of, each app's own `.local/config.json` (still just the app's own directory, unchanged) - so
+top of, each app's own `.local/config.yaml` (still just the app's own directory, unchanged) - so
 either layout works: one `project.json` at a parent folder above several per-app subfolders each
-with their own `config.json`, or a single `.local` folder holding both together. No `project.json`
+with their own `config.yaml`, or a single `.local` folder holding both together. No `project.json`
 anywhere above a directory means its apps belong to `default`. Every registered project's actual
 definition (isolation, parent, exclusive, ports) lives centrally in `~/.localctl/profiles.json`,
 not duplicated in the repo - `project.json` is just a pointer, so `localctl profiles new <name>`
@@ -370,7 +370,7 @@ directory of its own to resolve from.
 
 ## Sidecars
 
-`.local/config.json`'s `"sidecars"` array adds extra containers to your app's own pod (see
+`.local/config.yaml`'s `"sidecars"` array adds extra containers to your app's own pod (see
 [Config Schema](./config-schema.md#sidecars) for the field reference) — `buildDeployment()` in
 `cli/src/lib/manifestGen.js` just appends them to the same pod spec as the main app container.
 Because they share the pod's network namespace, your app reaches a sidecar via `localhost:<port>`
@@ -400,7 +400,7 @@ localctl/
 │   │   └── addons/       built-in: per-app (postgres/redis/mongo/) + cluster/ (logging/, monitoring/)
 │   └── templates/        generic Tiltfile copied into app repos by `localctl app new`
 ~/.localctl/addons/       your own addons (create yourself) - see docs/adding-tools.md
-├── schema/               JSON Schema for .local/config.json (editor autocomplete)
+├── schema/               JSON Schema for .local/config.yaml (editor autocomplete)
 ├── examples/             sample app configs
 └── docs/                 you are here
 ```

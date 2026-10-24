@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const APP_DIR = process.cwd();
 const LOCAL_DIR = path.join(APP_DIR, '.local');
-const CONFIG_PATH = path.join(LOCAL_DIR, 'config.json');
+const CONFIG_PATH = path.join(LOCAL_DIR, 'config.yaml');
 const HOME_STATE_DIR = path.join(os.homedir(), '.localctl');
 const APPS_REGISTRY_PATH = path.join(HOME_STATE_DIR, 'apps.json');
 const PROFILES_PATH = path.join(HOME_STATE_DIR, 'profiles.json');

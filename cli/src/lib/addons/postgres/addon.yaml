@@ -26,8 +26,12 @@ envFromSecret:
     secret: "{{secretName}}"
     key: password
 
+# Where in the chart's values a dependency's `resources:` (cpu/memory requests and limits from the
+# app's config) are written. Charts differ, so each addon says where its main workload's live.
+resourcesPath: primary.resources
+
 # Passed to `helm template` as -f values.yaml. {{...}} is substituted first: {{database}}/
-# {{storage}}/{{version}} come from the app's own .local/config.json dependency entry (with
+# {{storage}}/{{version}} come from the app's own .local/config.yaml dependency entry (with
 # fallback defaults), {{secretName}} from the generated Secret above.
 values: |
   auth:

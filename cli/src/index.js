@@ -27,6 +27,8 @@ require('./commands/status')(app);
 require('./commands/logs')(app);
 require('./commands/reload')(app);
 require('./commands/generateManifests')(app);
+require('./commands/tiltConfig')(app);
+require('./commands/validate')(app);
 require('./commands/registryInfo')(app);
 require('./commands/exec')(app);
 require('./commands/prune')(app);

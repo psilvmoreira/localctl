@@ -62,7 +62,7 @@ JSON file per app.
 | 🧩 **One cluster, one CLI** | A single [k3d](https://k3d.io) cluster runs every app you develop. No per-project Kubernetes setup. |
 | 🌐 **A subdomain per app** | `orders.local.test`, `billing.local.test`, routed by Traefik. No `localhost:3000` vs `:3001`. |
 | 🔒 **HTTPS by default** | A locally-trusted wildcard certificate (via [mkcert](https://github.com/FiloSottile/mkcert)). Green padlock, no browser warnings. |
-| 📄 **Config, not YAML** | Each app has one `.local/config.json`. Every Kubernetes manifest is generated from it. |
+| 📄 **Config, not manifests** | Each app has one `.local/config.yaml`. Every Kubernetes manifest is generated from it. |
 | ⚡ **Fast inner loop** | [Tilt](https://tilt.dev) builds, deploys, and live-syncs changed files into the running container. |
 | 🐞 **Debugger-friendly** | Debug ports forwarded to `localhost`. Node, Python, Go, Java and .NET patterns included. |
 | 🗄️ **Databases in one line** | Postgres, Redis and MongoDB per app, from real Helm charts, with credentials injected as Secrets. |
@@ -173,7 +173,7 @@ self-contained shim in `~/.localctl/bin` and run `localctl setup` for you:
 localctl app new
 ```
 
-This asks for an app name and port, then creates `.local/config.json` and a `Tiltfile`.
+This asks for an app name and port, then creates `.local/config.yaml` and a `Tiltfile`.
 
 **2. Deploy:**
 
@@ -246,7 +246,7 @@ Run `localctl <command> --help` for every option, or see the full
 
 | Command | Description |
 |---|---|
-| `localctl app new` | Scaffold `.local/config.json` and a `Tiltfile` in the current repository. |
+| `localctl app new` | Scaffold `.local/config.yaml` and a `Tiltfile` in the current repository. |
 | `localctl app up [-f]` | Build, deploy and live-reload the app. Background by default; `-f` for the Tilt UI. |
 | `localctl app down` | Stop the dev loop and remove the app. Keeps its data. |
 | `localctl app reload [-a <name>]` | Force a rebuild and redeploy without waiting for a file change. |
@@ -254,7 +254,7 @@ Run `localctl <command> --help` for every option, or see the full
 | `localctl app logs [name] [-f]` | Show or follow an app's logs. Inside its repository the name is optional. |
 | `localctl app exec [cmd...]` | Open a shell (default `sh`) in the app's pod. |
 | `localctl app prune [-y]` | Delete leftover data (volumes, secrets) of apps already taken down. |
-| `localctl app secrets set <KEY> [value]` | Store a secret as a Kubernetes Secret, never in `config.json`. |
+| `localctl app secrets set <KEY> [value]` | Store a secret as a Kubernetes Secret, never in `config.yaml`. |
 | `localctl app secrets list` / `show [KEY]` / `unset <KEY>` | List, reveal or remove secrets. |
 
 </details>
@@ -274,20 +274,28 @@ Run `localctl <command> --help` for every option, or see the full
 
 ## Configuration
 
-Everything about how an app runs locally lives in its `.local/config.json`:
+Everything about how an app runs locally lives in its `.local/config.yaml`:
 
-```json
-{
-  "name": "orders-api",
-  "subdomain": "orders",
-  "port": 3000,
-  "build": { "context": ".", "dockerfile": "Dockerfile" },
-  "env": { "NODE_ENV": "development" },
-  "debug": { "enabled": true, "port": 9229, "type": "node" },
-  "dependencies": [{ "type": "postgres", "database": "orders" }],
-  "sync": [{ "localPath": "./src", "remotePath": "/app/src" }],
-  "tls": true
-}
+```yaml
+name: orders-api
+subdomain: orders
+port: 3000
+build:
+  context: .
+  dockerfile: Dockerfile
+env:
+  NODE_ENV: development
+debug:
+  enabled: true
+  port: 9229
+  type: node
+dependencies:
+  - type: postgres
+    database: orders
+sync:
+  - localPath: ./src
+    remotePath: /app/src
+tls: true
 ```
 
 This deploys `orders-api` at `https://orders.local.test`, with its own Postgres instance and the
@@ -316,7 +324,7 @@ To add your own addon, see [**Adding tools**](https://psilvmoreira.github.io/loc
 ## How it works
 
 ```
- .local/config.json ──► localctl ──► Kubernetes manifests ──► Tilt ──► k3d cluster
+ .local/config.yaml ──► localctl ──► Kubernetes manifests ──► Tilt ──► k3d cluster
    (your app repo)     validates      (generated, never        builds,     Traefik ingress
                        + generates     hand-written)           pushes,     + local registry
                                                                live-syncs  + *.local.test TLS
@@ -335,7 +343,7 @@ The full documentation lives at **[psilvmoreira.github.io/localctl](https://psil
 | [Getting started](https://psilvmoreira.github.io/localctl/getting-started/) | Install and first deploy, step by step |
 | [Architecture](https://psilvmoreira.github.io/localctl/architecture/) | Every component, why it was chosen, multi-project support |
 | [CLI commands](https://psilvmoreira.github.io/localctl/cli-reference/) | Every command and option |
-| [Config schema](https://psilvmoreira.github.io/localctl/config-schema/) | Every `.local/config.json` field |
+| [Config schema](https://psilvmoreira.github.io/localctl/config-schema/) | Every `.local/config.yaml` field |
 | [Debugging](https://psilvmoreira.github.io/localctl/debugging/) | Attach a debugger in Node, Python, Go, Java and .NET |
 | [Adding tools](https://psilvmoreira.github.io/localctl/adding-tools/) | Write your own per-app or cluster-wide addon |
 | [Troubleshooting](https://psilvmoreira.github.io/localctl/troubleshooting/) | Known issues, with cause and fix |
@@ -400,7 +408,7 @@ localctl/
 │   ├── templates/       Tiltfile copied into apps by `localctl app new`
 │   └── scripts/         packaging and test scripts
 ├── cluster/manifests/   cluster-level manifests (TLS store, addon namespace)
-├── schema/              JSON Schema for .local/config.json
+├── schema/              JSON Schema for .local/config.yaml
 ├── examples/            ready-to-run sample apps
 ├── docs/                documentation pages (MkDocs Material, deployed to GitHub Pages)
 ├── overrides/           docs site template overrides (landing page)

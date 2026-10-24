@@ -1,12 +1,12 @@
 # Debugging
 
-Set `"debug": { "enabled": true, "port": <port>, "type": "<node|python|go|java|dotnet>" }` in
-`.local/config.json`. Tilt reads this and adds the port to its `port_forwards`, so the debug port
+Set `debug: { enabled: true, port: <port>, type: <node|python|go|java|dotnet> }` in
+`.local/config.yaml`. `localctl` resolves this for Tilt, which adds the port to its `port_forwards`, so the debug port
 on the pod is reachable at `localhost:<port>` the moment `localctl app up` is running — no manual
 `kubectl port-forward` needed.
 
 Your Dockerfile's `CMD`/`ENTRYPOINT` is what actually starts the process in debug mode; `.local/
-config.json` only controls what gets exposed and forwarded.
+config.yaml` only controls what gets exposed and forwarded.
 
 ## Node.js
 
@@ -18,9 +18,12 @@ config.json` only controls what gets exposed and forwarded.
 CMD ["npx", "nodemon", "-L", "--watch", "src", "--inspect=0.0.0.0:9229", "src/index.js"]
 ```
 
-**.local/config.json**
-```json
-"debug": { "enabled": true, "port": 9229, "type": "node" }
+**.local/config.yaml**
+```yaml
+debug:
+  enabled: true
+  port: 9229
+  type: node
 ```
 
 **VSCode `launch.json`**
@@ -49,9 +52,12 @@ ENV WATCHFILES_FORCE_POLLING=true
 CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 ```
 
-**.local/config.json**
-```json
-"debug": { "enabled": true, "port": 5678, "type": "python" }
+**.local/config.yaml**
+```yaml
+debug:
+  enabled: true
+  port: 5678
+  type: python
 ```
 
 **VSCode `launch.json`**
@@ -76,9 +82,12 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 CMD ["dlv", "exec", "./main", "--headless", "--listen=0.0.0.0:2345", "--api-version=2", "--accept-multiclient"]
 ```
 
-**.local/config.json**
-```json
-"debug": { "enabled": true, "port": 2345, "type": "go" }
+**.local/config.yaml**
+```yaml
+debug:
+  enabled: true
+  port: 2345
+  type: go
 ```
 
 **VSCode `launch.json`**
@@ -101,9 +110,12 @@ ENV JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,add
 CMD ["java", "-jar", "app.jar"]
 ```
 
-**.local/config.json**
-```json
-"debug": { "enabled": true, "port": 5005, "type": "java" }
+**.local/config.yaml**
+```yaml
+debug:
+  enabled: true
+  port: 5005
+  type: java
 ```
 
 **VSCode `launch.json`**
@@ -135,8 +147,11 @@ RUN curl -sSL https://github.com/Samsung/netcoredbg/releases/latest/download/net
 CMD ["/opt/netcoredbg/netcoredbg", "--server", "--interpreter=vscode", "--port=4711", \
      "--", "dotnet", "/out/YourApi.dll"]
 ```
-```json
-"debug": { "enabled": true, "port": 4711, "type": "dotnet" }
+```yaml
+debug:
+  enabled: true
+  port: 4711
+  type: dotnet
 ```
 ```json
 {
@@ -159,8 +174,11 @@ RUN apt-get update && apt-get install -y openssh-server \
     && sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
 CMD service ssh start && dotnet watch run --urls http://0.0.0.0:5000 --non-interactive
 ```
-```json
-"debug": { "enabled": true, "port": 2222, "type": "dotnet" }
+```yaml
+debug:
+  enabled: true
+  port: 2222
+  type: dotnet
 ```
 
 Then in either IDE: **Attach to Process → SSH**, host `localhost`, port `2222`, user `root`,

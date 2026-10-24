@@ -2,12 +2,20 @@ const fs = require('fs');
 const { CONFIG_PATH, runFiles } = require('../lib/paths');
 const { run, isRunning } = require('../lib/exec');
 const logger = require('../lib/logger');
+const { readRawConfig } = require('../lib/loadConfig');
+
+const APP_NAME = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
 function resolveAppName(opts) {
-  if (opts.app) return opts.app;
+  if (opts.app) {
+    if (!APP_NAME.test(opts.app) || opts.app.length > 63) throw new Error(`"${opts.app}" is not a valid app name.`);
+    return opts.app;
+  }
   if (fs.existsSync(CONFIG_PATH)) {
     try {
-      return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')).name;
+      const name = readRawConfig(CONFIG_PATH).name;
+      // Only a plain app name: it becomes part of file names and a tilt argument.
+      return typeof name === 'string' && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(name) ? name : null;
     } catch (e) {
       // fall through
     }
@@ -32,7 +40,7 @@ module.exports = (program) => {
       }
 
       const pid = parseInt(fs.readFileSync(pidFile, 'utf8'), 10);
-      if (!Number.isFinite(pid) || !isRunning(pid)) {
+      if (!Number.isInteger(pid) || pid <= 1 || !isRunning(pid)) {
         throw new Error(`"${name}"'s dev loop isn't running. Run "localctl app up" to start it.`);
       }
 
