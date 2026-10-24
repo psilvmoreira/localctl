@@ -1,0 +1,202 @@
+/* localctl theme on top of Material. Brand colors come from the logo (docs/assets/favicon.svg):
+   indigo for primary, teal for accent. */
+
+:root,
+[data-md-color-scheme="default"] {
+  --lc-indigo: #3f51b5;
+  --lc-indigo-dark: #303f9f;
+  --lc-teal: #00897b;
+  --md-primary-fg-color: var(--lc-indigo);
+  --md-primary-fg-color--light: #5c6bc0;
+  --md-primary-fg-color--dark: var(--lc-indigo-dark);
+  --md-accent-fg-color: var(--lc-teal);
+  --md-accent-fg-color--transparent: rgba(0, 137, 123, 0.1);
+  --md-typeset-a-color: var(--lc-indigo);
+  --lc-hero-bg: linear-gradient(135deg, #283593 0%, #3f51b5 55%, #00897b 140%);
+  --lc-terminal-bg: #10131f;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #2b3470;
+  --md-primary-fg-color--light: #3f51b5;
+  --md-primary-fg-color--dark: #1f2654;
+  --md-accent-fg-color: #4db6ac;
+  --md-accent-fg-color--transparent: rgba(77, 182, 172, 0.1);
+  --md-typeset-a-color: #8c9eff;
+  --md-default-bg-color: #141724;
+  --md-code-bg-color: #1b1f30;
+  --lc-hero-bg: linear-gradient(135deg, #141a3a 0%, #1f2654 55%, #00504a 140%);
+  --lc-terminal-bg: #0b0d16;
+}
+
+/* ---------- Landing page hero (overrides/home.html) ---------- */
+
+.lc-hero {
+  background: var(--lc-hero-bg);
+  color: #fff;
+}
+
+.lc-hero__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+  padding: 3.5rem 0.8rem;
+}
+
+@media screen and (min-width: 76.25em) {
+  .lc-hero__inner { padding-left: 1.2rem; padding-right: 1.2rem; }
+}
+
+.md-typeset .lc-hero__eyebrow {
+  margin: 0 0 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a7ffeb;
+}
+
+.md-typeset .lc-hero__title {
+  margin: 0 0 1rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: #fff;
+}
+
+.md-typeset .lc-hero__lead {
+  margin: 0 0 1.6rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.md-typeset .lc-hero__lead code {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.md-typeset .lc-hero__actions .md-button {
+  margin: 0 0.5rem 0.5rem 0;
+  border-color: #fff;
+  color: #fff;
+}
+
+.md-typeset .lc-hero__actions .md-button--primary {
+  background: #fff;
+  color: var(--lc-indigo-dark, #303f9f);
+}
+
+.md-typeset .lc-hero__actions .md-button:hover,
+.md-typeset .lc-hero__actions .md-button:focus {
+  background: #a7ffeb;
+  border-color: #a7ffeb;
+  color: #1a237e;
+}
+
+.md-typeset .lc-hero__ghost {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Fake terminal on the right of the hero. */
+.lc-terminal {
+  border-radius: 0.6rem;
+  background: var(--lc-terminal-bg);
+  box-shadow: 0 1.2rem 2.5rem rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.lc-terminal__bar {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.65rem 0.8rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.lc-terminal__bar span {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+.lc-terminal__bar span:nth-child(2) { background: #febc2e; }
+.lc-terminal__bar span:nth-child(3) { background: #28c840; }
+
+.md-typeset .lc-terminal__body {
+  margin: 0;
+}
+
+.md-typeset .lc-terminal__body code {
+  display: block;
+  padding: 1rem 1.2rem 1.2rem;
+  background: transparent;
+  color: #e6e8f2;
+  font-size: 0.74rem;
+  line-height: 1.7;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.lc-terminal .lc-p { color: #4db6ac; user-select: none; }
+.lc-terminal .lc-dim { color: #8a90a8; }
+.lc-terminal .lc-ok { color: #69f0ae; font-weight: 700; }
+.lc-terminal .lc-url { color: #8c9eff; text-decoration: underline; }
+
+@media screen and (max-width: 76.1875em) {
+  .lc-hero__inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.8rem;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+  }
+  .md-typeset .lc-hero__title { font-size: 1.7rem; }
+}
+
+/* ---------- Content polish ---------- */
+
+/* Grid cards: a subtle lift on hover instead of Material's flat default. */
+.md-typeset .grid.cards > ul > li,
+.md-typeset .grid.cards > ol > li {
+  border-radius: 0.5rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid.cards > ol > li:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--md-shadow-z2);
+  border-color: var(--md-accent-fg-color);
+}
+
+/* Card icons in brand colors. */
+.md-typeset .grid.cards .lg {
+  color: var(--md-primary-fg-color);
+}
+[data-md-color-scheme="slate"] .md-typeset .grid.cards .lg {
+  color: var(--md-accent-fg-color);
+}
+
+/* Numbered steps on the landing page. */
+.md-typeset .lc-steps > ol > li::marker {
+  font-weight: 700;
+  color: var(--md-accent-fg-color);
+}
+
+.md-typeset .md-button {
+  border-radius: 0.4rem;
+}
+
+/* Tighter, more card-like admonitions. */
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: 0.375rem;
+}
+
+/* Command names in reference tables shouldn't wrap mid-command. */
+.md-typeset table:not([class]) td:first-child code {
+  white-space: nowrap;
+}
