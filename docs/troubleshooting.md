@@ -242,6 +242,60 @@ Then re-run `localctl app up`. As of this fix, a leftover process like this can 
 *different* app's deploy (each gets its own port) - but it's still a stray process worth cleaning
 up, and it'll keep blocking `localctl app up -f` for whichever app it belongs to.
 
+## `Namespace "<ns>" already exists and wasn't created by localctl`
+
+`app up`, `down`, `prune`, `secrets` and the manifest generation only touch namespaces that
+`localctl` created for that app (they carry the label `localctl.dev/managed=true` and the
+annotation `localctl.dev/app=<name>`). This protects a namespace that belongs to something else,
+for example when a copied config names `namespace: shop` and `shop` is a real namespace of yours.
+
+- Pick another `namespace` (or `name`) in `.local/config.yaml`; or
+- if the namespace is yours and this app should use it:
+  `kubectl label namespace <ns> localctl.dev/managed=true` and
+  `kubectl annotate namespace <ns> localctl.dev/app=<app name>`.
+
+`Namespace "<ns>" belongs to the app "<other>"` means a different app already owns it: give the two
+apps different namespaces. `...is managed by localctl but has no owner recorded` is fixed with the
+`annotate` command above, and `...is being deleted` just needs a moment.
+
+## `Couldn't check whether namespace "<ns>" is yours`
+
+The same check could not get an answer from the cluster (it is not running, `kubectl` points at
+another context, or your user may not read namespaces), and `localctl` refuses to carry on rather
+than guess. Run `kubectl get namespace <ns>` yourself to see the real error, make sure the project's
+cluster is up (`localctl profiles status`, `localctl doctor`), and try again.
+
+## `The host "<name>.local.test" may already be served by <namespace>/...`
+
+`app up` found another namespace that already answers for that host through an Ingress (a wildcard
+such as `*.local.test` counts) or a Traefik `IngressRoute`, and two apps on one host would fight
+over it. Change `subdomain` or the `ingress.hosts` entry, or remove the other route:
+`kubectl get ingress,ingressroute -A`. A `HostRegexp` rule that could cover the host is reported
+too, since its reach can't be worked out.
+
+## `A Secret named "<app>-secrets" already exists ... and wasn't created by localctl`
+
+`app secrets` only edits the Secret it created itself, so it never merges your keys into an unrelated
+one. Rename the other Secret, or if it is yours to use:
+`kubectl label secret <app>-secrets -n <ns> localctl.dev/managed=true`.
+A value can be at most 512 KB. `The secrets of "<app>" kept changing while updating them` means
+another `localctl` was writing the same Secret for several seconds; just run the command again.
+
+## `Invalid .local/config.yaml: ...`
+
+`localctl app validate` prints the same problems, all at once. The common ones:
+
+- `unknown field "x" - did you mean "y"?` - a typo; every object in the file is strict.
+- `Found .../config.json, but localctl now reads .local/config.yaml` - rename the old file.
+- `complex mapping keys ("? ...") are not supported` - a line starting with `? `, usually inside a
+  text block; reword it. `too many YAML aliases` - a config may use at most 200 `*alias` references.
+- `points outside the project` - `build.context`, `build.dockerfile` and `sync[].localPath` can go up
+  with `..` only as far as the git repository root, symlinks included.
+- `is a symbolic link; use a plain file` - `.local/config.yaml`, its `.local` folder and the
+  `envFile` must be real files and folders, with a single hard link.
+- `expected a number; write it plainly` - write `8080`, not `"8080"`, `8080.0` or `+8080`.
+- `Unknown environment "x"` - `--env` only accepts a name listed under `environments`.
+
 ## Starting fresh
 
 For a quick cluster-only reset of the `default` project (keeps your CLI install, certs, hosts

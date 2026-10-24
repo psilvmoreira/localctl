@@ -109,9 +109,11 @@ sequenceDiagram
     You->>CLI: localctl app up
     CLI->>CLI: loadConfig() - validate, resolve project/namespace/subdomain
     CLI->>K8s: ensureClusterUp() - cluster exists? set kubectl context
+    CLI->>K8s: namespace is ours? host free? (refuses and stops if not)
     CLI->>CLI: check every declared "secrets" key has a value (else abort)
     CLI->>Tilt: spawn detached, own free port
     Tilt->>Tilt: registry-info (localctl) - which registry to push to
+    Tilt->>CLI: tilt-config (localctl) - resolved build, sync, run steps, ports
     Tilt->>Tilt: docker_build - build image
     Tilt->>Reg: push image
     Tilt->>CLI: generate-manifests (localctl)
@@ -130,6 +132,42 @@ sequenceDiagram
     Tilt->>Reg: rebuild + push
     Tilt->>K8s: redeploy
 ```
+
+## How the config is read, and what is checked
+
+`.local/config.yaml` goes through the same steps in every command, in `cli/src/lib/loadConfig.js`:
+
+1. **Read safely** (`safeRead.js`): it must be a plain file inside a real `.local` folder, at most
+   512 KB, valid UTF-8, with a single hard link.
+2. **Parse** (`yamlLoad.js`): YAML where `1.10`, `1e3`, `0x10`, `0777` and dates stay text, and where
+   complex keys and floods of aliases are refused before parsing. The size of the result is checked
+   too, so a few aliases can't expand into a huge tree.
+3. **Environment overlay**: with `--env <name>` (passed on as `LOCALCTL_ENV`, so the calls Tilt makes
+   see the same thing) the named entry of `environments` is merged over the base. It can't change
+   `name`, `namespace`, `envFile` or `environments`.
+4. **`envFile`** is merged under the explicit `env` keys.
+5. **Validate** (`configSchema.js`, zod): every object is strict, with "did you mean" hints, and the
+   rules for ports, names, mounts, quantities (`quantities.js`), annotations and list sizes live
+   there. `schema/app.schema.json` mirrors it for editors; `scripts/schema-check.js` keeps them equal.
+6. **Paths** (`pathGuard.js`): `build.context`, `dockerfile` and `sync[].localPath` are followed
+   through symlinks and must stay inside the git repository.
+
+Before anything is created, changed or deleted in the cluster, two guards run (`namespaces.js`,
+`hostGuard.js`). They treat "I couldn't find out" as a refusal, never as permission:
+
+- **Namespace ownership**: the namespace must not exist yet, or carry the label
+  `localctl.dev/managed=true` and the annotation `localctl.dev/app=<this app>`. `up`, `down`,
+  `prune`, `secrets` and `generate-manifests` all check, and `prune` checks again right before
+  deleting. Namespaces are created in one request with their owner recorded, and the result is
+  verified, so two apps racing for one namespace can't both win.
+- **Host uniqueness** (`app up`): no other namespace may already serve one of the app's hosts through
+  an Ingress, a wildcard or a Traefik `IngressRoute`.
+
+The app's own secrets (`appSecrets.js`) are stored as base64 `data` with `create`/`replace`, never
+`apply` (which would keep a plaintext copy in an annotation), carry a resourceVersion so concurrent
+updates are retried instead of overwritten, and only a Secret that `localctl` created is edited.
+`kubeErrors.js` recognises kubectl's answers exactly (the real `NotFound` for the real object), so
+a failure that merely contains the words "not found" is not mistaken for "free".
 
 ## Request routing: browser to pod
 

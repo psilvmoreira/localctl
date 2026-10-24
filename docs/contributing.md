@@ -37,12 +37,23 @@ edit the repo-root originals, never the copies.
 
 ```sh
 cd cli
-npm test            # every command module loads, --version matches package.json
+npm test            # smoke test, schema parity check, unit tests (cli/test/)
 npm run test:pack   # packs the real tarball, installs it in a temp prefix, runs it
 ```
 
-CI runs both on Linux, macOS and Windows with Node 18 and 22. Neither test needs a cluster: for
-changes to setup, manifests or addons, also run the flow by hand against one of the
+`npm test` runs three things in a row: the smoke test (every command module loads,
+`--version` matches `package.json`), `scripts/schema-check.js` (fails when
+`schema/app.schema.json` and the zod schema in `src/lib/configSchema.js` list different fields, so
+change both together) and the unit tests in `cli/test/config.test.js` (Node's built-in test runner).
+The unit tests cover the config loader, the schema rules and the safety guards. Code that talks to
+`kubectl` is tested with a fake `kubectl` script placed first in `PATH`; those tests, and the ones
+that need symlinks or FIFOs, are skipped on Windows. When you add a field, add a schema rule and a
+test for what it must refuse, not only for what it accepts.
+
+CI runs `npm test` and `npm run test:pack` on Linux, macOS and Windows with Node 18 and 22, and
+builds the docs with `mkdocs build --strict` (install `mkdocs` and `mkdocs-material` in a virtualenv
+to run it yourself). None of these need a cluster: for
+changes to setup, manifests, guards or addons, also run the flow by hand against one of the
 [examples](https://github.com/psilvmoreira/localctl/tree/master/examples):
 
 ```sh
@@ -53,7 +64,16 @@ localctl app down
 ```
 
 To check generated Kubernetes YAML without deploying, run `localctl app generate-manifests` from
-an app directory.
+an app directory. `localctl app validate` checks a config without touching the cluster, and
+`tilt alpha tiltfile-result` (from an app directory) shows whether Tilt accepts the generated
+`Tiltfile`.
+
+For changes that act on the cluster (namespace ownership, secrets, prune, down), test against a
+throwaway cluster, never your own: create one with `k3d cluster create <name> --kubeconfig-update-default=false --kubeconfig-switch-context=false`,
+write its kubeconfig to its own file (`k3d kubeconfig get <name> > file`, then change `0.0.0.0` to `127.0.0.1`
+on macOS), point `KUBECONFIG` at that file and `HOME` at an empty folder, so `~/.localctl`, `~/.kube` and
+the hosts file are not touched, and delete it afterwards. Do not run `localctl app up` that way: it
+edits the real hosts file.
 
 ## Pull requests
 

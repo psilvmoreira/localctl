@@ -107,6 +107,18 @@ settings, live-sync paths, your own secrets, readiness/liveness overrides — fu
 [Config Schema](./config-schema.md). See `examples/node-app`, `examples/python-app`, and
 `examples/dotnet-api` for filled-out examples.
 
+Check the file before deploying with `localctl app validate`: it reports typos ("unknown field
+`replica` - did you mean `replicas`?"), wrong types and bad values for the base config and for
+every environment, without touching the cluster. The `environments` block holds named overrides
+(for example more replicas); pick one with `localctl app up --env <name>` (see
+[Config schema: environments](config-schema.md#environments)).
+
+!!! note "Coming from an older version"
+    The config used to be `.local/config.json`. `localctl` now reads only `.local/config.yaml`
+    and tells you so if it finds the old file. JSON is valid YAML, so renaming the file is enough
+    to get going; then change the `read_json` line of an old `Tiltfile` or generate a new one
+    (copy the `Tiltfile` of any example).
+
 Adding a `dependencies` entry (`postgres`/`redis`/`mongo`) gets you a real Helm-deployed database
 alongside your app *and* a `wait-for-<type>` init container automatically — your app's own
 container won't start until that database is actually accepting connections, so
